@@ -10,6 +10,60 @@
     <a asp-action="Create" class="btn btn-success">+ Dodaj Nową</a>
 </p>
 
+<!-- Sekcja Filtrowania i Wyszukiwania -->
+<form asp-controller="Auctions" asp-action="Index" method="get" class="mb-5 p-3 bg-light rounded shadow-sm">
+    <div class="row g-3">
+        
+        <!-- Wyszukiwarka -->
+        <div class="col-md-12">
+            <div class="input-group">
+                <input type="text" name="searchString" class="form-control" placeholder="Szukaj po tytule lub opisie..." />
+                <button type="submit" class="btn btn-primary">Szukaj</button>
+            </div>
+        </div>
+
+        <!-- Filtr Kategorii -->
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Kategoria</label>
+            <select name="category" class="form-select">
+                <option value="">-- Wszystkie --</option>
+                <option value="Elektronika">Elektronika</option>
+                <option value="Moda">Moda</option>
+                <option value="Dom i Ogród">Dom i Ogród</option>
+                <option value="Sport i Hobby">Sport i Hobby</option>
+                <option value="Motoryzacja">Motoryzacja</option>
+                <option value="Kultura i Rozrywka">Kultura i Rozrywka</option>
+                <option value="Inne">Inne</option>
+            </select>
+        </div>
+
+        <!-- Filtr Ceny -->
+        <div class="col-md-5">
+            <label class="form-label fw-bold">Cena (PLN)</label>
+            <div class="input-group">
+                <input type="number" name="minPrice" class="form-control" placeholder="Od" step="0.01" />
+                <span class="input-group-text">-</span>
+                <input type="number" name="maxPrice" class="form-control" placeholder="Do" step="0.01" />
+            </div>
+        </div>
+
+        <!-- Sortowanie -->
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Sortowanie i Akcje</label>
+            <div class="btn-group w-100" role="group">
+                <button type="submit" name="sortOrder" value="price_asc" class="btn btn-outline-secondary">
+                    Cena &uarr;
+                </button>
+                <button type="submit" name="sortOrder" value="price_desc" class="btn btn-outline-secondary">
+                    Cena &darr;
+                </button>
+                <a asp-action="Index" class="btn btn-outline-danger">Wyczyść</a>
+            </div>
+        </div>
+    </div> <!-- Zamknięcie div row formularza -->
+</form> <!-- !!! TO JEST KLUCZOWE - zamknięcie formularza !!! -->
+
+<!-- Lista Aukcji -->
 <div class="row">
     @foreach (var item in Model) {
         <div class="col-md-4 mb-4">
@@ -24,15 +78,10 @@
                     
                     <small class="text-muted">Sprzedawca: @(item.User?.Email ?? "Nieznany")</small>
                 </div>
-                <div class="card-footer bg-white border-top-0">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary w-100">Zobacz szczegóły</a>
+                <div class="card-footer bg-white border-top-0 d-flex gap-2">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary flex-fill">Szczegóły</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary flex-fill">Edytuj</a>
                 </div>
-                
-            
-                <div class="card-footer bg-white border-top-0">
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary w-100">Edytuj</a>
-                </div>
-
             </div>
         </div>
     }

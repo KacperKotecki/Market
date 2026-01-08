@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Market.Web.Data;
 using Market.Web.Models;
+using Market.Web.Repositories; // -- 1. Dodano brakujący using
 
 namespace Market.Web.Controllers;
 
@@ -19,14 +20,47 @@ public class AuctionsController : Controller
         _userManager = userManager;
     }
 
-    // GET: Auctions (Lista wszystkich aukcji)
-    [AllowAnonymous] // Listę mogą widzieć niezalogowani
-    public async Task<IActionResult> Index()
+    // GET: Auctions (Zaktualizowano o parametry filtrowania)
+    [AllowAnonymous]
+    public async Task<IActionResult> Index(string? searchString, string? category, decimal? minPrice, decimal? maxPrice, string? sortOrder)
     {
+
         var auctions = await _repository.GetAllAsync();
-        return View(auctions);
+
+        IEnumerable<Auction> query = auctions;
+
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            query = query.Where(s => s.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) 
+                                  || s.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(x => x.Category == category);
+        }
+
+        if (minPrice.HasValue)
+        {
+            query = query.Where(x => x.Price >= minPrice.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(x => x.Price <= maxPrice.Value);
+        }
+
+        query = sortOrder switch
+        {
+            "price_desc" => query.OrderByDescending(s => s.Price),
+            "price_asc" => query.OrderBy(s => s.Price),
+            _ => query.OrderByDescending(s => s.CreatedAt), // Domyślne: od najnowszych
+        };
+
+        return View(query.ToList());
     }
-     [AllowAnonymous]
+
+    [AllowAnonymous]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -62,7 +96,7 @@ public class AuctionsController : Controller
         auction.UserId = user.Id;
         auction.CreatedAt = DateTime.Now;
         auction.AuctionStatus = AuctionStatus.Active;
-
+        
         
         ModelState.Remove("UserId");
         ModelState.Remove("User");
@@ -70,13 +104,14 @@ public class AuctionsController : Controller
         
         if (ModelState.IsValid)
         {
-            _context.Add(auction);
-            await _context.SaveChangesAsync();
+            await _repository.AddAsync(auction);
+            await _repository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
         
         return View(auction);
     }
+    
     private async Task<ApplicationUser> GetCurrentUserAsync()
     {
         var user = await _userManager.GetUserAsync(User);

@@ -12,6 +12,8 @@ public class Auction
     [StringLength(100, MinimumLength = 3, ErrorMessage = "Tytuł musie mieć od 3 do 100 znaków")]
     public string Title { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Kategoria jest wymagana.")]
+    public string Category { get; set; } = string.Empty;
     [Required(ErrorMessage = "Opis jest wymagany.")]
     public string Description { get; set; } = string.Empty;
 
