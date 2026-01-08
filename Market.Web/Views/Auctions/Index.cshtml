@@ -62,37 +62,45 @@
                 <a asp-action="Index" class="btn btn-outline-danger">Wyczyść</a>
             </div>
         </div>
-    </div> <!-- Zamknięcie div row formularza -->
-</form> <!-- !!! TO JEST KLUCZOWE - zamknięcie formularza !!! -->
+    </div> 
+</form>
 
-<!-- Lista Aukcji -->
+
 <div class="row">
     @foreach (var item in Model) {
         <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow-sm position-relative"> 
                @{
                     var indexImage = item.Images != null && item.Images.Any() 
                                     ? item.Images.First().ImagePath 
                                     : "https://via.placeholder.com/300";
                 }
+                
                 <img src="@indexImage" 
                      class="card-img-top" alt="@item.Title"
                      style="height: 200px; object-fit: cover;" />
                 
                 <div class="card-body">
-                    <h5 class="card-title">@item.Title</h5>
+                    <h5 class="card-title">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="stretched-link text-decoration-none text-dark">
+                            @item.Title
+                        </a>
+                    </h5>
                     <h6 class="card-subtitle mb-2 text-muted">@item.Price.ToString("C")</h6>
                     <p class="card-text text-truncate">@item.Description</p>
-                    
                     <small class="text-muted">Sprzedawca: @(item.User?.Email ?? "Nieznany")</small>
                 </div>
-                <div class="card-footer bg-white border-top-0 d-flex gap-2">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary flex-fill">Szczegóły</a>
-                    @if (currentUserId != null && item.UserId == currentUserId)
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary flex-fill">Edytuj</a>
-                    }
-                </div>
+
+                @if (currentUserId != null && item.UserId == currentUserId)
+                {
+                    <div class="card-footer bg-white border-top-0">
+                        <a asp-action="Edit" asp-route-id="@item.Id" 
+                           class="btn btn-primary btn-sm w-100" 
+                           style="position: relative; z-index: 2;">
+                           Edytuj
+                        </a>
+                    </div>
+                }
             </div>
         </div>
     }
