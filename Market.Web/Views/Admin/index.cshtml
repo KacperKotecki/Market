@@ -1,0 +1,120 @@
+@using Market.Web.ViewModels 
+@model UsersListViewModel
+
+@{
+    ViewData["Title"] = "Panel Administratora";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🛠️ Zarządzanie Użytkownikami</h1>
+    </div>
+
+    <div class="card p-3 mb-4 bg-light shadow-sm">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Szukaj</label>
+                <input type="text" name="searchString" value="@Model.SearchString" 
+                       class="form-control" placeholder="Email, Nazwisko, NIP..." />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Sortowanie</label>
+                <select name="sortOrder" class="form-select" onchange="this.form.submit()">
+                    <!option value="" @(string.IsNullOrEmpty(Model.SortOrder) ? "selected" : "")>Domyślne (Nazwisko A-Z)</!option>
+                    <!option value="name_desc" @(Model.SortOrder == "name_desc" ? "selected" : "")>Nazwisko Z-A</!option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtruj</button>
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Users.Any())
+    {
+        <div class="alert alert-warning text-center">
+            <h4>Nie znaleziono użytkowników.</h4>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var user in Model.Users)
+            {
+                <div class="col-md-12 col-lg-12 mb-4">
+                    <div class="card h-100 shadow-sm @(user.IsBlocked ? "border-danger bg-light" : "border-success")">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-transparent">
+                            <span class="badge @(user.IsBlocked ? "bg-danger" : "bg-success")">
+                                @(user.IsBlocked ? "ZABLOKOWANY" : "AKTYWNY")
+                            </span>
+                            <small class="text-muted">ID: ...@user.Id.Substring(Math.Max(0, user.Id.Length - 4))</small>
+                        </div>
+                        
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate" title="@user.FullName">@user.FullName</h5>
+                            <h6 class="card-subtitle mb-2 text-primary">@user.Email</h6>
+                            
+                            <hr />
+                            
+                            <p class="mb-1">
+                                <strong>Firma:</strong> @(user.CompanyName ?? "---")
+                            </p>
+                            <p class="mb-1">
+                                <strong>NIP:</strong> @(user.NIP ?? "---")
+                            </p>
+                            <p class="mb-1">
+                                <strong>Liczba aukcji:</strong> <span class="badge bg-secondary">@user.AuctionCount</span>
+                            </p>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top-0">
+                            <div class="d-grid gap-2">
+                                <form asp-action="ToggleBlockUser" method="post">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    @if (user.IsBlocked)
+                                    {
+                                        <button type="submit" class="btn btn-outline-success w-100 btn-sm">
+                                            🔓 Odblokuj konto
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-outline-danger w-100 btn-sm" 
+                                                onclick="return confirm('Czy na pewno chcesz zablokować tego użytkownika?');">
+                                            ⛔ Zablokuj (Soft Delete)
+                                        </button>
+                                    }
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pageNumber="@(Model.CurrentPage - 1)"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-sortOrder="@Model.SortOrder">
+                        &laquo; Poprzednia
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Strona @Model.CurrentPage z @Model.TotalPages</span>
+                </li>
+                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pageNumber="@(Model.CurrentPage + 1)"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-sortOrder="@Model.SortOrder">
+                        Następna &raquo;
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

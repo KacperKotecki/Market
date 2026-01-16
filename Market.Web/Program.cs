@@ -19,6 +19,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 
+builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
