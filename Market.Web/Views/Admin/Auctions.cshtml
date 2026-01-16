@@ -1,0 +1,168 @@
+@using Market.Web.ViewModels 
+@using Market.Web.Models
+@model AdminAuctionsListViewModel
+
+@{
+    ViewData["Title"] = "Zarządzanie Aukcjami";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📢 Zarządzanie Aukcjami</h2>
+        <a asp-action="Index" class="btn btn-outline-primary">👥 Przełącz na Użytkowników</a>
+    </div>
+
+    <div class="card p-3 mb-4 bg-light shadow-sm">
+        <form asp-action="Auctions" method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Szukaj (Tytuł, Opis, Email sprzedawcy)</label>
+                <input type="text" name="searchString" value="@Model.SearchString" 
+                       class="form-control" placeholder="Wpisz frazę..." />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Sortowanie</label>
+                <select name="sortOrder" class="form-select" onchange="this.form.submit()">
+                    <!option value="" @(string.IsNullOrEmpty(Model.SortOrder) ? "selected" : "")>Najnowsze</!option>
+                    <!option value="price_asc" @(Model.SortOrder == "price_asc" ? "selected" : "")>Cena: Rosnąco</!option>
+                    <!option value="price_desc" @(Model.SortOrder == "price_desc" ? "selected" : "")>Cena: Malejąco</!option>
+                    <!option value="status" @(Model.SortOrder == "status" ? "selected" : "")>Status (Zablokowane pierwsze)</!option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtruj</button>
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Auctions.Any())
+    {
+        <div class="alert alert-warning text-center">
+            <h4>Brak aukcji spełniających kryteria.</h4>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var auction in Model.Auctions)
+            {
+                <div class="col-md-12 col-lg-12 mb-4">
+
+                    <div class="card h-100 shadow-sm @(auction.IsBanned ? "border-danger" : "border-light")">
+                        
+                        <div class="card-header d-flex justify-content-between align-items-center bg-transparent">
+                             <span class="badge @GetBadgeClass(auction.Status)">
+                                @auction.Status
+                            </span>
+                            <small class="text-muted">@auction.CreatedAt.ToShortDateString()</small>
+                        </div>
+
+                        <div class="bg-light d-flex align-items-center" style="height: 180px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; border-bottom: 1px solid #eee;">
+    
+                            @if (auction.ImagePaths.Any())
+                            {
+                                foreach (var imgPath in auction.ImagePaths)
+                                {
+                                    <a href="@imgPath" target="_blank" class="d-inline-block h-100 p-1">
+                                        <img src="@imgPath" style="height: 100%; width: auto; object-fit: contain; border-radius: 4px;" alt="Foto aukcji" />
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                                    <span>📷 Brak zdjęć</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate" title="@auction.Title">@auction.Title</h5>
+                            <h6 class="text-primary fw-bold">@auction.Price.ToString("C")</h6>
+                            
+                            <hr />
+                            <p class="mb-1 text-truncate"><small>Sprzedawca:</small> <br/> <strong>@auction.SellerEmail</strong></p>
+                            <p class="mb-1"><small>Kategoria:</small> @auction.Category</p>
+                            
+                            @if(auction.IsBanned && !string.IsNullOrEmpty(auction.BannedNote))
+                            {
+                                <div class="alert alert-danger mt-2 p-2">
+                                    <small><strong>Powód blokady:</strong> @auction.BannedNote</small>
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top-0">
+                            <form asp-action="ToggleAuctionBan" method="post" class="d-grid gap-2">
+                                <input type="hidden" name="id" value="@auction.Id" />
+                                
+                                @if (!auction.IsBanned)
+                                {
+                                    <input type="text" name="reason" class="form-control form-control-sm mb-2" 
+                                        placeholder="Powód blokady (np. naruszenie zasad)" required />
+                                    
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Zablokować tę ofertę?');">
+                                        <i class="bi bi-slash-circle"></i> Zablokuj
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="bi bi-check-circle"></i> Przywróć aukcję
+                                    </button>
+                                }
+                            </form>
+                            
+
+                            <a asp-controller="Auctions" asp-action="Details" asp-route-id="@auction.Id" 
+                               class="btn btn-link btn-sm w-100 mt-1 text-decoration-none text-muted">
+                               Podgląd szczegółów &raquo;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                    <a class="page-link" asp-action="Auctions"
+                       asp-route-pageNumber="@(Model.CurrentPage - 1)"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-sortOrder="@Model.SortOrder">
+                        &laquo; Poprzednia
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Strona @Model.CurrentPage z @Model.TotalPages</span>
+                </li>
+                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                    <a class="page-link" asp-action="Auctions"
+                       asp-route-pageNumber="@(Model.CurrentPage + 1)"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-sortOrder="@Model.SortOrder">
+                        Następna &raquo;
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@functions {
+    string GetBadgeClass(AuctionStatus status)
+    {
+        return status switch
+        {
+            AuctionStatus.Active => "bg-success",
+            AuctionStatus.Banned => "bg-danger",
+            AuctionStatus.Suspended => "bg-warning text-dark",
+            AuctionStatus.Sold => "bg-secondary",
+            AuctionStatus.Expired => "bg-dark",
+            _ => "bg-info text-dark"
+        };
+    }
+}

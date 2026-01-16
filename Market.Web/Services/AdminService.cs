@@ -2,6 +2,7 @@ using Market.Web.Data;
 using Market.Web.Models.Admin;
 using Microsoft.EntityFrameworkCore;
 using Market.Web.ViewModels;
+using Market.Web.Models;
 
 namespace Market.Web.Services;
 
@@ -80,4 +81,79 @@ public class AdminService : IAdminService
             await _context.SaveChangesAsync();
         }
     }
+    public async Task<AdminAuctionsListViewModel> GetAuctionsAsync(string searchString, string sortOrder, int pageNumber, int pageSize)
+    {
+        var query = _context.Auctions
+            .Include(a => a.User)     
+            .Include(a => a.Images)    
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            string search = searchString.ToLower();
+            query = query.Where(a =>
+                a.Title.ToLower().Contains(search) ||
+                a.Description.ToLower().Contains(search) ||
+                (a.User != null && a.User.Email.ToLower().Contains(search))
+            );
+        }
+
+        query = sortOrder switch
+        {
+            "price_desc" => query.OrderByDescending(a => a.Price),
+            "price_asc" => query.OrderBy(a => a.Price),
+            "status" => query.OrderByDescending(a => a.AuctionStatus),
+            _ => query.OrderByDescending(a => a.CreatedAt) 
+        };
+
+        int totalItems = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var auctions = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(a => new AdminAuctionDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Price = a.Price,
+                Category = a.Category,
+                SellerEmail = a.User != null ? a.User.Email : "Nieznany",
+                Status = a.AuctionStatus,
+                CreatedAt = a.CreatedAt,
+                BannedNote = a.BannedNote,
+                ImagePaths = a.Images.Select(img => img.ImagePath).ToList()
+            })
+            .ToListAsync();
+
+        return new AdminAuctionsListViewModel
+        {
+            Auctions = auctions,
+            SearchString = searchString,
+            SortOrder = sortOrder,
+            CurrentPage = pageNumber,
+            TotalPages = totalPages
+        };
+    }
+
+    public async Task ToggleAuctionBanAsync(int auctionId, string? reason)
+{
+    var auction = await _context.Auctions.FindAsync(auctionId);
+    if (auction == null) return;
+
+    if (auction.AuctionStatus == AuctionStatus.Banned)
+    {
+        auction.AuctionStatus = AuctionStatus.Active;
+        auction.BannedNote = null; 
+    }
+    else
+    {
+        auction.AuctionStatus = AuctionStatus.Banned;
+        auction.BannedNote = !string.IsNullOrWhiteSpace(reason) 
+            ? reason 
+            : "Zablokowane przez administratora (bez podania przyczyny).";
+    }
+
+    await _context.SaveChangesAsync();
+}
 }

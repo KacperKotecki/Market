@@ -27,6 +27,8 @@ public class Auction
 
     public AuctionStatus AuctionStatus { get; set; }
 
+    public string? BannedNote { get; set; }
+
     public string? UserId { get; set; }
     public ApplicationUser? User { get; set; }
 }

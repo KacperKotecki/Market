@@ -4,7 +4,7 @@ using Market.Web.Services;
 
 namespace Market.Web.Controllers;
 
-[Authorize(Roles = "Admin")] // Kluczowe zabezpieczenie! Tylko admin wejdzie.
+[Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
     private readonly IAdminService _adminService;
@@ -29,5 +29,20 @@ public class AdminController : Controller
     {
         await _adminService.ToggleUserBlockStatusAsync(id);
         return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Auctions(string searchString, string sortOrder, int pageNumber = 1)
+    {
+        int pageSize = 10;
+        var model = await _adminService.GetAuctionsAsync(searchString, sortOrder, pageNumber, pageSize);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleAuctionBan(int id, string? reason)
+    {
+        await _adminService.ToggleAuctionBanAsync(id, reason);
+        return RedirectToAction(nameof(Auctions));
     }
 }

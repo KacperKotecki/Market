@@ -7,6 +7,7 @@ namespace Market.Web.Models
     Sold = 2,        // sprzedana
     Expired = 3,     // po terminie
     Cancelled = 4,   // anulowana przez sprzedawcę
-    Suspended = 5    // zawieszona przez administratora
+    Suspended = 5,    // zawieszona przez administratora
+    Banned = 6 // zablokowana
     }
 }
