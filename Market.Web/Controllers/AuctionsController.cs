@@ -83,7 +83,7 @@ public class AuctionsController : Controller
         {
             EndDate = DateTime.Now.AddDays(30) 
         };
-        return View();
+        return View(model);
     }
 
 
@@ -98,7 +98,11 @@ public class AuctionsController : Controller
         auction.CreatedAt = DateTime.Now;
         auction.AuctionStatus = AuctionStatus.Active;
         auction.Quantity = auction.Quantity;
-        auction.EndDate = auction.EndDate;
+
+        if (auction.EndDate <= DateTime.Now)
+            ModelState.AddModelError("EndDate", "Data zakończenia aukcji musi być późniejsza niż dzisiejsza.");
+        else
+            auction.EndDate = auction.EndDate;
         
         ModelState.Remove("UserId");
         ModelState.Remove("User");
@@ -191,8 +195,14 @@ public class AuctionsController : Controller
             auctionToUpdate.Price = auction.Price;
             auctionToUpdate.Category = auction.Category;
             auctionToUpdate.Quantity = auction.Quantity;
-            auctionToUpdate.EndDate = auction.EndDate;
 
+            if (auction.EndDate <= DateTime.Now)
+            {
+                ModelState.AddModelError("EndDate", "Data zakończenia aukcji musi być późniejsza niż dzisiejsza.");
+                return View(auctionToUpdate); 
+            }
+            else
+                auctionToUpdate.EndDate = auction.EndDate;
 
             if (photos != null && photos.Count > 0)
             {
