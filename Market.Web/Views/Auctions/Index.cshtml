@@ -13,7 +13,7 @@
 </p>
 
 <!-- Sekcja Filtrowania i Wyszukiwania -->
-<form asp-controller="Auctions" asp-action="Index" method="get" class="mb-5 p-3 bg-light rounded shadow-sm">
+<form asp-controller="Auctions" asp-action="Index" method="get" class="mb-5 p-3 rounded shadow-sm">
     <div class="row g-3">
         
         <!-- Wyszukiwarka -->
@@ -53,13 +53,13 @@
         <div class="col-md-4">
             <label class="form-label fw-bold">Sortowanie i Akcje</label>
             <div class="btn-group w-100" role="group">
-                <button type="submit" name="sortOrder" value="price_asc" class="btn btn-outline-secondary">
+                <button type="submit" name="sortOrder" value="price_asc" class="btn btn-secondary">
                     Cena &uarr;
                 </button>
-                <button type="submit" name="sortOrder" value="price_desc" class="btn btn-outline-secondary">
+                <button type="submit" name="sortOrder" value="price_desc" class="btn btn-secondary">
                     Cena &darr;
                 </button>
-                <a asp-action="Index" class="btn btn-outline-danger">Wyczyść</a>
+                <a asp-action="Index" class="btn btn-danger">Wyczyść</a>
             </div>
         </div>
     </div> 
@@ -82,7 +82,7 @@
                 
                 <div class="card-body">
                     <h5 class="card-title">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="stretched-link text-decoration-none text-dark">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="stretched-link text-decoration-none">
                             @item.Title
                         </a>
                     </h5>
@@ -93,7 +93,7 @@
 
                 @if (currentUserId != null && item.UserId == currentUserId)
                 {
-                    <div class="card-footer bg-white border-top-0">
+                    <div class="card-footer border-top-0">
                         <a asp-action="Edit" asp-route-id="@item.Id" 
                            class="btn btn-primary btn-sm w-100" 
                            style="position: relative; z-index: 2;">
