@@ -52,41 +52,76 @@
             </div>
 
             <div class="col-md-6">
-                <div class="card-body">
-                    <h2 class="card-title">@Model.Title</h2>
-                    <h3 class="text-primary">@Model.Price.ToString("C")</h3>
-                    
+                <div class="card-body h-100 d-flex flex-column ps-md-4">
+
                     <div class="mb-3">
-                        @if(Model.Quantity > 0)
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary mb-2">@Model.Category</span>
+                        <h1 class="card-title fw-bold mb-1">@Model.Title</h1>
+                        <small class="text-secondary opacity-75">ID oferty: #@Model.Id</small>
+                    </div>
+
+                    <div class="p-3 rounded-3 border border-secondary bg-body-tertiary mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="d-block text-secondary small text-uppercase fw-bold mb-1">Aktualna cena</span>
+                                <h2 class="text-warning fw-bolder mb-0 display-6">@Model.Price.ToString("N2") <span class="fs-5 text-muted">PLN</span></h2>
+                            </div>
+                            
+                            @if(Model.Quantity > 0)
+                            {
+                                <div class="text-end text-success">
+                                    <i class="bi bi-box-seam fs-3"></i>
+                                    <div class="fw-bold small">Dostępne: @Model.Quantity szt.</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-end text-danger">
+                                    <i class="bi bi-x-octagon fs-3"></i>
+                                    <div class="fw-bold small">Wyprzedane</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <ul class="list-unstyled d-flex flex-column gap-3">
+                            <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2">
+                                <span class="text-secondary"><i class="bi bi-person-circle text-primary me-2"></i>Sprzedawca</span>
+                                <span class="fw-medium">@(Model.User?.UserName ?? "Nieznany")</span>
+                            </li>
+                            <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2">
+                                <span class="text-secondary"><i class="bi bi-calendar-event text-info me-2"></i>Dodano</span>
+                                <span>@Model.CreatedAt.ToString("dd.MM.yyyy")</span>
+                            </li>
+                            <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2">
+                                <span class="text-secondary"><i class="bi bi-clock-history text-danger me-2"></i>Koniec aukcji</span>
+                                <span class="@(Model.EndDate < DateTime.Now ? "text-danger fw-bold" : "")">
+                                    @Model.EndDate.ToString("dd.MM.yyyy HH:mm")
+                                </span>
+                            </li>
+                            <li class="d-flex justify-content-between pb-2">
+                                <span class="text-secondary"><i class="bi bi-info-circle text-warning me-2"></i>Status</span>
+                                <span class="badge bg-dark border border-secondary">@Model.AuctionStatus</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-auto">
+                        @if (Model.AuctionStatus == Market.Web.Models.AuctionStatus.Active && Model.Quantity > 0 && Model.EndDate > DateTime.Now)
                         {
-                            <span class="badge bg-success">Dostępnych sztuk: @Model.Quantity</span>
+                            <a asp-action="Buy" asp-route-id="@Model.Id" class="btn btn-warning w-100 py-3 fw-bold fs-5 shadow-lg text-dark border-0">
+                                KUP TERAZ <i class="bi bi-cart-check-fill ms-2"></i>
+                            </a>
                         }
                         else
                         {
-                            <span class="badge bg-danger">Produkt wyprzedany</span>
+                            <button class="btn btn-secondary w-100 py-3 fw-bold disabled" disabled>
+                                <i class="bi bi-slash-circle me-2"></i> OFERTA NIEDOSTĘPNA
+                            </button>
                         }
                     </div>
 
-                    <dt class="col-sm-4">Data dodania:</dt>
-                        <dd class="col-sm-8">@Model.CreatedAt.ToShortDateString()</dd>
-
-                        <dt class="col-sm-4">Koniec aukcji:</dt>
-                        <dd class="col-sm-8 text-danger fw-bold">@Model.EndDate.ToString("dd.MM.yyyy HH:mm")</dd>
-
-                        <dt class="col-sm-4">Status:</dt>
-
-                    <dl class="row mt-4">
-                        <dt class="col-sm-4">Sprzedawca:</dt>
-                        <dd class="col-sm-8">@(Model.User?.UserName ?? "Nieznany")</dd>
-                        
-                        <dt class="col-sm-4">Data dodania:</dt>
-                        <dd class="col-sm-8">@Model.CreatedAt.ToShortDateString()</dd>
-
-                        <dt class="col-sm-4">Status:</dt>
-                        <dd class="col-sm-8">@Model.AuctionStatus</dd>
-                    </dl>
-
-                    <a asp-action="Buy" asp-route-id="@Model.Id" class="btn btn-success btn-lg w-100 mt-3">Kup Teraz</a>
                 </div>
             </div>
 
