@@ -3,6 +3,7 @@ using System;
 using Market.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Market.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260118222856_AddIsCompanySaleToAuction")]
+    partial class AddIsCompanySaleToAuction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
@@ -184,49 +187,6 @@ namespace Market.Web.Migrations
                         .IsUnique();
 
                     b.ToTable("CompanyProfiles");
-                });
-
-            modelBuilder.Entity("Market.Web.Models.Order", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AuctionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("BuyerCompanyName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("BuyerId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("BuyerInvoiceAddress")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("BuyerNIP")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsCompanyPurchase")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuctionId");
-
-                    b.HasIndex("BuyerId");
-
-                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("Market.Web.Models.UserProfile", b =>
@@ -451,25 +411,6 @@ namespace Market.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("UserProfile");
-                });
-
-            modelBuilder.Entity("Market.Web.Models.Order", b =>
-                {
-                    b.HasOne("Market.Web.Models.Auction", "Auction")
-                        .WithMany()
-                        .HasForeignKey("AuctionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Market.Web.Models.ApplicationUser", "Buyer")
-                        .WithMany()
-                        .HasForeignKey("BuyerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Auction");
-
-                    b.Navigation("Buyer");
                 });
 
             modelBuilder.Entity("Market.Web.Models.UserProfile", b =>

@@ -110,8 +110,8 @@
                     <div class="mt-auto">
                         @if (Model.AuctionStatus == Market.Web.Models.AuctionStatus.Active && Model.Quantity > 0 && Model.EndDate > DateTime.Now)
                         {
-                            <a asp-action="Buy" asp-route-id="@Model.Id" class="btn btn-warning w-100 py-3 fw-bold fs-5 shadow-lg text-dark border-0">
-                                KUP TERAZ <i class="bi bi-cart-check-fill ms-2"></i>
+                            <a asp-controller="Order" asp-action="Checkout" asp-route-auctionId="@Model.Id" class="btn btn-success btn-lg w-100">
+                                KUP TERAZ
                             </a>
                         }
                         else

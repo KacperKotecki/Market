@@ -7,17 +7,18 @@ namespace Market.Web.Data;
 // Pamiętaj o generycznym <ApplicationUser>
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
-    // Tabele
     public DbSet<Auction> Auctions { get; set; } 
     
     public DbSet<AuctionImage> AuctionImages { get; set; }
     public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<CompanyProfile> CompanyProfiles { get; set; }
+
+    public DbSet<Order> Orders { get; set; } 
+
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

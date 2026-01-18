@@ -30,6 +30,8 @@ public class Auction
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime EndDate { get; set; }
 
+    [Display(Name = "Sprzedaż jako firma (Faktura VAT / Paragon)")]
+    public bool IsCompanySale { get; set; } = false; 
     public bool GeneratedByAi { get; set; } = false;
     public AuctionStatus AuctionStatus { get; set; }
 

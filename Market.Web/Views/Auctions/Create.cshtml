@@ -49,6 +49,38 @@
             </div>
         </div>
 
+        <div class="card bg-light border-secondary mb-4">
+            <div class="card-body">
+                <div class="form-check form-switch">
+                    @{
+                        bool canSellAsCompany = ViewBag.CanSellAsCompany ?? false;
+                    }
+                    
+                    <input class="form-check-input" asp-for="IsCompanySale" type="checkbox" id="companySaleSwitch" 
+                           disabled="@(canSellAsCompany ? null : "disabled")">
+                    
+                    <label class="form-check-label fw-bold" for="companySaleSwitch">
+                        @Html.DisplayNameFor(m => m.IsCompanySale)
+                    </label>
+
+                    @if (!canSellAsCompany)
+                    {
+                        <div class="text-danger small mt-1">
+                            <i class="bi bi-exclamation-circle"></i> Opcja niedostępna. 
+                            <a asp-controller="Profile" asp-action="EditProfile" class="text-danger fw-bold text-decoration-underline">
+                                Uzupełnij dane firmowe w profilu
+                            </a>, aby wystawiać faktury.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted small mt-1">
+                            Zaznacz, jeśli sprzedajesz ten przedmiot jako firma (kupujący otrzyma dokument zakupu).
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
         <!-- POLA FORMULARZA -->
         <partial name="_AuctionFormFields" model="Model" />
 

@@ -16,12 +16,14 @@ public class AuctionsController : Controller
     private readonly IAuctionRepository _repository;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IADescriptionService _aiService;
+    private readonly Market.Web.Data.ApplicationDbContext _context; 
 
-    public AuctionsController(IAuctionRepository repository, UserManager<ApplicationUser> userManager, IADescriptionService aiService)
+    public AuctionsController(IAuctionRepository repository, UserManager<ApplicationUser> userManager, IADescriptionService aiService, Market.Web.Data.ApplicationDbContext context)
     {
         _repository = repository;
         _userManager = userManager;
         _aiService = aiService;
+        _context = context;
     }
 
     [AllowAnonymous]
@@ -81,8 +83,19 @@ public class AuctionsController : Controller
         return View(auction);
     }
     [Seller]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        var user = await GetCurrentUserAsync();
+        
+        bool hasCompanyProfile = false;
+        if (user != null)
+        {
+             hasCompanyProfile = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AnyAsync(
+                _context.CompanyProfiles, cp => cp.UserProfile.UserId == user.Id);
+        }
+
+        ViewBag.CanSellAsCompany = hasCompanyProfile;
+
         var model = new Auction
         {
             EndDate = DateTime.Now.AddDays(30) 
