@@ -186,7 +186,6 @@ public class AuctionsController : Controller
     [Seller]
     [HttpPost]
     [ValidateAntiForgeryToken]
-
     public async Task<IActionResult> Edit(int id, Auction auction, List<IFormFile> photos)
     {
         if (id != auction.Id)
@@ -257,7 +256,22 @@ public class AuctionsController : Controller
         
         return View(auctionToUpdate);
     }
-        [HttpPost]
+    [Seller]
+    [Authorize]
+    public async Task<IActionResult> MyAuctions()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        var myAuctions = await _context.Auctions
+            .Include(a => a.Images) // Potrzebne do miniaturek
+            .Where(a => a.UserId == user.Id)
+            .OrderByDescending(a => a.CreatedAt) // Najnowsze na górze
+            .ToListAsync();
+
+        return View(myAuctions);
+    }
+    [HttpPost]
     public async Task<IActionResult> GenerateDescription(List<IFormFile> photos)
     {
         if (photos == null || photos.Count == 0)

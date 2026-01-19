@@ -1,0 +1,166 @@
+@model IEnumerable<Market.Web.Models.Auction>
+@using Market.Web.Models
+
+@{
+    ViewData["Title"] = "Moje Aukcje";
+}
+
+<link rel="stylesheet" href="~/css/auction-index.css" asp-append-version="true" />
+
+<div class="container mt-4 mb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h1 class="fw-bold mb-0">Moje Oferty</h1>
+            <p class="text-muted mb-0">Zarządzaj statusem i widocznością swoich przedmiotów</p>
+        </div>
+        <a asp-action="Create" class="btn btn-success fw-bold px-4 shadow-sm">
+            Wystaw nową
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 bg-light rounded-3 shadow-sm opacity-75">
+            <i class="bi bi-box-seam display-1 text-secondary mb-3 d-block"></i>
+            <h4 class="fw-bold">Nic tu jeszcze nie ma.</h4>
+            <p class="mb-4">Wystaw swój pierwszy przedmiot na sprzedaż!</p>
+            <a asp-action="Create" class="btn btn-primary rounded-pill px-4">Rozpocznij Sprzedaż</a>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var item in Model)
+            {
+                var indexImage = item.Images != null && item.Images.Any() 
+                                ? item.Images.First().ImagePath 
+                                : "https://via.placeholder.com/300x220?text=Brak+Zdjecia";
+
+                string statusBadgeClass = item.AuctionStatus switch
+                {
+                    AuctionStatus.Active => "bg-success",   // Zielony
+                    AuctionStatus.Banned => "bg-danger",    // Czerwony
+                    AuctionStatus.Suspended => "bg-danger", // Czerwony
+                    AuctionStatus.Draft => "bg-secondary",  // Szary
+                    AuctionStatus.Sold => "bg-dark",        // Czarny
+                    _ => "bg-primary"
+                };
+
+                string statusText = item.AuctionStatus switch
+                {
+                    AuctionStatus.Active => "AKTYWNA",
+                    AuctionStatus.Banned => "ZABLOKOWANA",
+                    AuctionStatus.Suspended => "ZAWIESZONA",
+                    AuctionStatus.Draft => "SZKIC",
+                    AuctionStatus.Sold => "SPRZEDANA",
+                    _ => item.AuctionStatus.ToString().ToUpper()
+                };
+
+                <div class="card auction-row-card rounded-3 overflow-hidden position-relative">
+                    <div class="row g-0 h-100">
+                        
+                        <div class="col-md-4 col-xl-3">
+                            <div class="auction-img-container h-100 position-relative">
+                                <img src="@indexImage" class="w-100 h-100 object-fit-cover" alt="@item.Title" />
+
+                                <span class="badge @statusBadgeClass position-absolute top-0 start-0 m-2 shadow-sm">
+                                    @statusText
+                                </span>
+                                
+                                <span class="badge bg-black bg-opacity-75 position-absolute bottom-0 start-0 m-2 border border-secondary">
+                                    @item.Category
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8 col-xl-9">
+                            <div class="card-body h-100 d-flex flex-column flex-md-row">
+                                
+                                <div class="flex-grow-1 pe-md-4">
+                                    <!-- Link -->
+                                    <h4 class="card-title fw-bold mb-2">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="text-reset text-decoration-none stretched-link">
+                                            @item.Title
+                                        </a>
+                                    </h4>
+
+                                    <div class="mb-3 text-secondary small d-flex flex-wrap gap-3">
+                                        @if (item.Quantity > 0)
+                                        {
+                                            <span><i class="bi bi-box-seam me-1"></i> Dostępne: @item.Quantity szt.</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger fw-bold"> Sprzedane</span>
+                                        }
+                                        
+                                        <span class="@(item.EndDate < DateTime.Now ? "text-danger fw-bold" : "")">
+                                            Koniec: @item.EndDate.ToShortDateString()
+                                        </span>
+
+                                        @if(item.IsCompanySale)
+                                        {
+                                            <span class="text-primary fw-bold"><i class="bi bi-receipt me-1"></i>Faktura VAT</span>
+                                        }
+                                    </div>
+
+                                    <p class="card-text text-secondary text-truncate-3 mb-0">
+                                        @item.Description
+                                    </p>
+
+                                    @if((item.AuctionStatus == AuctionStatus.Banned || item.AuctionStatus == AuctionStatus.Suspended) && !string.IsNullOrEmpty(item.BannedNote))
+                                    {
+                                        <div class="alert alert-danger py-2 px-3 small shadow-sm border-0 bg-danger bg-opacity-10 text-danger mb-2 position-relative mt-3" style="z-index: 2;">
+                                            <div class="d-flex align-items-start">
+                                                <div>
+                                                    <strong>Oferta zablokowana przez administratora.</strong><br/>
+                                                    Powód: <em>@item.BannedNote</em>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                </div>
+
+                                <div class="price-section ps-md-3 border-start-md border-secondary border-opacity-25 d-flex flex-column justify-content-between" style="min-width: 200px;">
+                                    
+                                    <div class="text-md-end mb-3">
+                                        <h3 class="text-warning fw-bolder mb-0">@item.Price.ToString("N2") <small class="fs-6 text-muted">PLN</small></h3>
+                                        
+                                        @if(item.GeneratedByAi)
+                                        {
+                                            <small class="d-block mt-1">
+                                                <span class="badge bg-info bg-opacity-10 text-info border border-info">Opis AI</span>
+                                            </small>
+                                        }
+                                    </div>
+
+                                    <div class="d-grid gap-2 mt-auto text-end">
+                                        
+                                        <a asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="btn btn-primary btn-sm fw-bold position-relative shadow-sm" style="z-index: 2;">
+                                            <i class="bi bi-pencil-square me-1"></i> Edytuj
+                                        </a>
+
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="btn btn-outline-secondary btn-sm position-relative" style="z-index: 2;">
+                                            Podgląd
+                                        </a>
+
+                                        <span class="text-muted x-small">
+                                            Utworzono: @item.CreatedAt.ToShortDateString()
+                                        </span>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
