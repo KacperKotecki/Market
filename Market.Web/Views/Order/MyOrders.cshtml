@@ -1,0 +1,122 @@
+@model IEnumerable<Market.Web.ViewModels.MyOrderViewModel>
+@using Market.Web.Models
+
+@{
+    ViewData["Title"] = "Moje Zakupy";
+}
+
+<link rel="stylesheet" href="~/css/auction-index.css" asp-append-version="true" />
+
+<div class="container mt-4 mb-5">
+    <h1 class="fw-bold mb-4 display-6 border-bottom pb-3">Moje Zakupy</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 bg-light rounded-4 shadow-sm opacity-75">
+            <h4>Brak historii zakupów.</h4>
+            <p class="text-muted">Nie kupiłeś jeszcze żadnego przedmiotu.</p>
+            <a asp-controller="Auctions" asp-action="Index" class="btn btn-primary rounded-pill px-4 mt-2">Przeglądaj oferty</a>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-4">
+            @foreach (var order in Model)
+            {
+                // Wybieramy styl badge'a statusu
+                string statusBadgeClass = order.Status switch
+                {
+                    OrderStatus.Paid => "bg-success",
+                    OrderStatus.Shipped => "bg-info text-dark",
+                    OrderStatus.Completed => "bg-secondary",
+                    OrderStatus.Pending => "bg-warning text-dark",
+                    _ => "bg-primary"
+                };
+
+                string statusLabel = order.Status switch
+                {
+                    OrderStatus.Paid => "Opłacone",
+                    OrderStatus.Shipped => "Wysłane",
+                    OrderStatus.Completed => "Zakończone",
+                    OrderStatus.Pending => "Oczekuje płatności",
+                    _ => order.Status.ToString()
+                };
+
+                <div class="card auction-row-card rounded-4 overflow-hidden shadow-sm border-0">
+                    <div class="row g-0 h-100">
+                        
+                        <div class="col-md-4 col-xl-3">
+                            <div class="auction-img-container h-100 position-relative">
+                                <img src="@order.ImageUrl" class="w-100 h-100 object-fit-cover" alt="@order.AuctionTitle" />
+
+
+                                <div class="position-absolute top-0 start-0 m-2 shadow-sm">
+                                    <span class="badge @statusBadgeClass">@statusLabel</span>
+                                </div>
+                                
+                                @if(order.IsCompanyPurchase)
+                                {
+                                    <span class="badge bg-light text-dark bg-opacity-75 position-absolute bottom-0 start-0 m-2 border border-secondary shadow-sm">
+                                        Faktura VAT
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-md-8 col-xl-9">
+                            <div class="card-body h-100 d-flex flex-column py-3 px-4">
+                                
+                                <!-- GÓRA KARTY: Info o zamówieniu -->
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-25">
+                                    <div class="text-muted small">
+                                        <span class="d-none d-sm-inline">Nr: <strong>#@order.OrderId</strong></span>
+                                        <span class="me-3 ms-2">@order.OrderDate.ToString("dd.MM.yyyy HH:mm")</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="text-muted small">Sprzedawca:</span> <strong>@order.SellerName</strong>
+                                    </div>
+                                </div>
+
+                                <div class="row h-100">
+                                    <!-- ZMIANA 1: Usunięto 'justify-content-center', dodano 'pt-2' (żeby tytuł był wyżej) -->
+                                    <div class="col-md-8 d-flex flex-column pt-2">
+                                        
+                                        <h4 class="card-title fw-bold mb-2">
+                                            <!-- ZMIANA 2: Dodano klasę 'text-reset', aby link był biały (dziedziczył kolor) -->
+                                            <a asp-controller="Auctions" asp-action="Details" asp-route-id="@order.AuctionId" class="text-reset text-decoration-none stretched-link">
+                                                @order.AuctionTitle
+                                            </a>
+                                        </h4>
+                                        <p class="text-muted small mb-0">Kliknij, aby zobaczyć szczegóły aukcji.</p>
+
+                                    </div>
+
+                                    <div class="col-md-4 border-start-md border-secondary border-opacity-25 ps-md-4 d-flex flex-column justify-content-center align-items-md-end text-md-end mt-3 mt-md-0 position-relative" style="z-index: 2;">
+                                        
+                                        <h3 class="text-warning fw-bold mb-3">@order.TotalPrice.ToString("N2") <small class="fs-6 text-muted">zł</small></h3>
+                                        
+                                        @if(order.Status == OrderStatus.Completed || order.Status == OrderStatus.Paid || order.Status == OrderStatus.Shipped) 
+                                        {
+                                            <button class="btn btn-outline-warning btn-sm fw-bold rounded-pill px-4" title="Funkcja w przygotowaniu">
+                                                Oceń zakup
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-light text-secondary btn-sm rounded-pill px-4 border" disabled>
+                                                Transakcja w toku
+                                            </button>
+                                        }
+
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
