@@ -19,6 +19,9 @@ public class UserProfile
     [Display(Name = "Prywatny Numer Konta")]
     public string? PrivateIBAN { get; set; }
 
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal WalletBalance { get; set; } = 0;
+    
     public Address ShippingAddress { get; set; } = new Address();
 
     [Required]

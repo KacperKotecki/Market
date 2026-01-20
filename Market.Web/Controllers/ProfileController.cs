@@ -116,5 +116,45 @@ namespace Market.Web.Controllers
             TempData["SuccessMessage"] = "Profil został zaktualizowany.";
             return RedirectToAction("Index", "Home");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> MyFinances()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var userProfile = await _context.UserProfiles
+                .FirstOrDefaultAsync(p => p.UserId == user.Id);
+
+            var sales = await _context.Orders
+                .Include(o => o.Auction)
+                .Include(o => o.Buyer)
+                .Where(o => o.Auction.UserId == user.Id)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            decimal pending = sales
+                .Where(o => o.Status == OrderStatus.Paid || o.Status == OrderStatus.Shipped)
+                .Sum(o => o.TotalPrice);
+
+            var model = new MyFinancesViewModel
+            {
+                IBAN = userProfile?.PrivateIBAN ?? "",
+                AvailableFunds = userProfile?.WalletBalance ?? 0,
+                PendingFunds = pending,
+                
+                Transactions = sales.Select(s => new FinanceTransactionDto
+                {
+                    OrderId = s.Id,
+                    Date = s.OrderDate,
+                    Title = s.Auction?.Title ?? "Usunięta aukcja",
+                    Amount = s.TotalPrice,
+                    Status = s.Status,
+                    BuyerName = s.Buyer?.UserName ?? "Nieznany"
+                }).ToList()
+            };
+
+            return View(model);
+        }
     }
 }

@@ -1,0 +1,111 @@
+@model Market.Web.ViewModels.MyFinancesViewModel
+
+@{
+    ViewData["Title"] = "Moje Finanse";
+}
+
+<div class="container mt-4 mb-5">
+    <h1 class="fw-bold mb-4">💳 Portfel i Finanse</h1>
+
+    <div class="row g-4 mb-5">
+        
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm bg-success bg-opacity-10">
+                <div class="card-body p-4 text-center">
+                    <h5 class="text-success text-uppercase opacity-75 fw-bold mb-3">Dostępne Środki</h5>
+                    <div class="display-4 fw-bold text-success mb-2">
+                        @Model.AvailableFunds.ToString("N2") <small class="fs-4">PLN</small>
+                    </div>
+                    <p class="text-muted small">Środki z zakończonych transakcji, gotowe do wypłaty.</p>
+                    
+                    @if (Model.AvailableFunds > 0 && Model.HasIBAN)
+                    {
+                        <button class="btn btn-success rounded-pill px-4 fw-bold">
+                            <i class="bi bi-bank me-2"></i>Wypłać na konto
+                        </button>
+                        
+                    }
+                    else if (!Model.HasIBAN)
+                    {
+                        <a asp-action="EditProfile" class="btn btn-outline-danger rounded-pill px-4 fw-bold">
+                            Uzupełnij numer IBAN
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm bg-warning bg-opacity-10">
+                <div class="card-body p-4 text-center">
+                    <h5 class="text-warning text-uppercase opacity-75 fw-bold mb-3 text-muted">Środki Oczekujące</h5>
+                    <div class="display-4 fw-bold text-muted mb-2">
+                        @Model.PendingFunds.ToString("N2") <small class="fs-4">PLN</small>
+                    </div>
+                    <p class="text-muted small">Środki z trwających transakcji (Opłacone/Wysłane).<br>Trafią do dostępnych po potwierdzeniu odbioru przez kupującego.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="fw-bold mb-3 border-bottom pb-2">Historia Operacji</h4>
+    
+    @if (!Model.Transactions.Any())
+    {
+        <p class="text-muted">Brak operacji finansowych.</p>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded-3">
+            <table class="table table-hover align-middle mb-0 bg-white">
+                <thead class="table-secondary">
+                    <tr>
+                        <th class="ps-4">Data</th>
+                        <th>Opis transakcji</th>
+                        <th>Kupujący</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end pe-4">Kwota</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Transactions)
+                    {
+                        string rowClass = "";
+                        if (t.Status == Market.Web.Models.OrderStatus.Completed) { rowClass = "fw-bold"; }
+                        else if (t.Status == Market.Web.Models.OrderStatus.Cancelled) { rowClass = "text-decoration-line-through text-muted opacity-50"; }
+
+                        <tr class="@rowClass">
+                            <td class="ps-4 text-muted small">@t.Date.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                Sprzedaż: <strong>@t.Title</strong>
+                                <small class="d-block text-muted">Zamówienie #@t.OrderId</small>
+                            </td>
+                            <td>@t.BuyerName</td>
+                            <td class="text-center">
+                                @if(t.Status == Market.Web.Models.OrderStatus.Completed)
+                                {
+                                    <span class="badge bg-success text-white">Dostępne</span>
+                                }
+                                else if(t.Status == Market.Web.Models.OrderStatus.Pending)
+                                {
+                                    <span class="badge bg-secondary">Oczekiwanie</span>
+                                }
+                                else if(t.Status == Market.Web.Models.OrderStatus.Paid || t.Status == Market.Web.Models.OrderStatus.Shipped)
+                                {
+                                    <span class="badge bg-warning text-dark">Zamrożone</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Anulowane</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4 @(t.Status == Market.Web.Models.OrderStatus.Completed ? "text-success" : "")">
+                                + @t.Amount.ToString("N2") zł
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

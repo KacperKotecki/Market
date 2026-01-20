@@ -1,0 +1,29 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Market.Web.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddWalletBalance : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<decimal>(
+                name: "WalletBalance",
+                table: "UserProfiles",
+                type: "decimal(18,2)",
+                nullable: false,
+                defaultValue: 0m);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "WalletBalance",
+                table: "UserProfiles");
+        }
+    }
+}

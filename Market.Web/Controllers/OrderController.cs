@@ -226,7 +226,7 @@ namespace Market.Web.Controllers
             return RedirectToAction(nameof(MySales));
         }
 
-        [HttpPost]
+                [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmDelivery(int orderId)
         {
@@ -234,6 +234,10 @@ namespace Market.Web.Controllers
             if (user == null) return Challenge();
 
             var order = await _context.Orders
+                .Include(o => o.Auction)
+                    .ThenInclude(a => a.User) 
+                .Include(o => o.Auction)
+                    .ThenInclude(a => a.User.UserProfile) 
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null) return NotFound();
@@ -250,12 +254,18 @@ namespace Market.Web.Controllers
             }
 
             order.Status = OrderStatus.Completed;
+
+            if(order.Auction != null && order.Auction.User != null && order.Auction.User.UserProfile != null)
+            {
+                order.Auction.User.UserProfile.WalletBalance += order.TotalPrice;
+            }
             
             await _context.SaveChangesAsync();
             
-            TempData["SuccessMessage"] = "Potwierdzono odbiór zamówienia. Dziękujemy!";
+            TempData["SuccessMessage"] = "Potwierdzono odbiór. Transakcja zakończona, środki przekazane sprzedawcy.";
             return RedirectToAction(nameof(MyOrders));
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Rate(int id)
