@@ -1,5 +1,5 @@
 @model IEnumerable<Market.Web.ViewModels.MyAuctionViewModel>
-
+@using Market.Web.Models
 @{
     ViewData["Title"] = "Moje Aukcje";
 }
@@ -66,7 +66,8 @@
                                                 <span class="text-danger fw-bold">Sprzedane</span>
                                             }
                                             
-                                            <span class="@(item.IsExpired ? "text-danger fw-bold" : "")">
+
+                                            <span class="@(item.AuctionStatus == AuctionStatus.Expired ? "text-danger fw-bold" : "")">
                                                 Koniec: @item.EndDateFormatted
                                             </span>
 
@@ -120,10 +121,26 @@
                                         </div>
 
                                         <div class="d-grid gap-2 mt-auto text-end">
-                                            
-                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm fw-bold">
-                                                <i class="bi bi-pencil-square me-1"></i> Edytuj
-                                            </a>
+
+                                            @if (item.AuctionStatus == AuctionStatus.Active)
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm fw-bold">
+                                                    <i class="bi bi-pencil-square me-1"></i> Edytuj
+                                                </a>
+                                                <!-- Dodajemy przycisk zakończenia -->
+                                                <a asp-action="SoftDelete" asp-route-id="@item.Id" 
+                                                   class="btn btn-outline-danger btn-sm"
+                                                   onclick="return confirm('Czy na pewno chcesz zakończyć sprzedaż?');">
+                                                    <i class="bi bi-stop-circle me-1"></i> Zakończ
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-secondary btn-sm opacity-50" disabled>
+                                                    <i class="bi bi-lock me-1"></i> Zakończona
+                                                </button>
+                                            }
+
                                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
                                                 Podgląd
                                             </a>

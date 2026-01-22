@@ -7,6 +7,7 @@ using Market.Web.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
 using Market.Web.Authorization;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Market.Web.Controllers;
 
@@ -144,7 +145,25 @@ public class AuctionsController : Controller
         }
         return View(auctionToUpdate);
     }
+    [Seller]
+    public async Task<IActionResult> SoftDelete(int id)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
 
+        var auctionToExpire = await _repository.GetByIdAsync(id);
+        
+        if (auctionToExpire == null) return NotFound();
+
+        if (auctionToExpire.UserId != user.Id) return Forbid();
+        
+        auctionToExpire.AuctionStatus = AuctionStatus.Cancelled;
+
+        await _repository.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Oferta została zakończona.";
+        return RedirectToAction(nameof(MyAuctions));
+    }
     [Seller]
     [Authorize]
     public async Task<IActionResult> MyAuctions()

@@ -79,7 +79,7 @@ public class AuctionProcessingService : IAuctionProcessingService
                 
                 CreatedAtFormatted = a.CreatedAt.ToShortDateString(),
                 EndDateFormatted = a.EndDate.ToShortDateString(),
-                IsExpired = a.EndDate < DateTime.Now,
+                AuctionStatus = a.AuctionStatus, 
 
                 IsBannedOrSuspended = a.AuctionStatus == AuctionStatus.Banned || a.AuctionStatus == AuctionStatus.Suspended,
                 BannedNote = a.BannedNote,
@@ -115,4 +115,5 @@ public class AuctionProcessingService : IAuctionProcessingService
             };
         }).ToList();
     }
+    
 }

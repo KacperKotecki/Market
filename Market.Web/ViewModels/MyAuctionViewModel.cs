@@ -24,7 +24,7 @@ public class MyAuctionViewModel
     
     public int Quantity { get; set; }
     public bool IsSoldOut => Quantity <= 0;
-    public bool IsExpired { get; set; }
+    public AuctionStatus AuctionStatus { get; set; }
     public bool IsCompanySale { get; set; }
     public bool GeneratedByAi { get; set; }
 
