@@ -29,11 +29,17 @@
     </div>
 
     <div class="col-md-6">
-        <div class="form-floating">
-            <input asp-for="EndDate" class="form-control" type="date" min="@DateTime.Today.ToString("d-MM-yyyy")" />
-            <label asp-for="EndDate">Data zakończenia</label>
-        </div>
-        <span asp-validation-for="EndDate" class="text-danger"></span>
+    <label asp-for="EndDate" class="control-label fw-bold mb-1">Data zakończenia</label>
+    
+    <!-- ZMIANA: Dodano atrybut data-val="false" -->
+    <input asp-for="EndDate" 
+           class="form-control" 
+           type="datetime-local" 
+           asp-format="{0:yyyy-MM-ddTHH:mm}"
+           min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+           data-val="false" /> 
+           
+    <span asp-validation-for="EndDate" class="text-danger small"></span>
     </div>
 
     <div class="col-md-6">
