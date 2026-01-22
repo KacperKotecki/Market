@@ -112,14 +112,23 @@ public class AdminService : IAdminService
                 (a.User != null && a.User.Email.ToLower().Contains(search))
             );
         }
-
-        query = sortOrder switch
+        switch (sortOrder)
         {
-            "price_desc" => query.OrderByDescending(a => a.Price),
-            "price_asc" => query.OrderBy(a => a.Price),
-            "status" => query.OrderByDescending(a => a.AuctionStatus),
-            _ => query.OrderByDescending(a => a.CreatedAt) 
-        };
+            case "price_asc":
+                query = query.OrderBy(a => (double)a.Price);
+                break;
+            case "price_desc":
+                query = query.OrderByDescending(a => (double)a.Price);
+                break;
+            case "status":
+                query = query.OrderByDescending(a => a.AuctionStatus == AuctionStatus.Banned)
+                             .ThenByDescending(a => a.AuctionStatus == AuctionStatus.Suspended)
+                             .ThenBy(a => a.AuctionStatus);
+                break;
+            default:
+                query = query.OrderByDescending(a => a.CreatedAt);
+                break;
+        }
 
         int totalItems = await query.CountAsync();
         int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
