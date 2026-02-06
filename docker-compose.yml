@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  market-app:
+    container_name: market-web-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5005:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=market_db;Username=postgres;Password=postgres
+      - ASPNETCORE_HTTP_PORTS=8080
+      # Wymuszamy providera Postgres w kontenerze (jeśli dodałeś tę logikę do Program.cs)
+      - DatabaseProvider=Postgres 
+    depends_on:
+      postgres-db:
+        condition: service_healthy # <--- CZEKAMY AŻ BAZA BĘDZIE ZDROWA
+    volumes:
+      - ./market_uploads:/app/wwwroot/uploads
+
+  postgres-db:
+    image: postgres:15
+    container_name: market-postgres
+    environment:
+      - POSTGRES_DB=market_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # SPRAWDZANIE CZY BAZA JUŻ WSTAŁA:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -4,31 +4,28 @@ using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
-using Market.Web.Authorization;
-using Microsoft.AspNetCore.Authorization;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseNpgsql(connectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
+    .AddRoles<IdentityRole>() 
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
-
 builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
-
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
-
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
-
-builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -37,12 +34,19 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        
+        if (context.Database.GetPendingMigrations().Any())
+        {
+            await context.Database.MigrateAsync();
+        }
+
         await Market.Web.Data.DbSeeder.SeedRolesAndAdminAsync(services);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Wystąpił błąd podczas seedowania bazy danych.");
+        logger.LogError(ex, "Wystąpił błąd podczas seedowania lub migracji bazy danych.");
     }
 }
 
@@ -54,7 +58,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
