@@ -13,13 +13,14 @@
             <h1 class="fw-bold mb-0">Moje Oferty</h1>
             <p class="text-muted mb-0">Zarządzaj statusem i widocznością swoich przedmiotów</p>
         </div>
-        <a asp-action="Create" class="btn btn-success fw-bold px-4 shadow-sm">Start</a>
+        <a asp-action="Create" class="btn btn-success fw-bold px-4 shadow-sm">Wystaw przedmiot</a>
     </div>
 
     @if (!Model.Any())
     {
-        <div class="text-center py-5 bg-light rounded-3 shadow-sm opacity-75">
+        <div class="text-center py-5 bg-dark rounded-3 shadow-sm opacity-75">
             <h4 class="fw-bold">Brak aukcji</h4>
+            <p class="text-muted">Nie wystawiłeś jeszcze żadnego przedmiotu.</p>
             <a asp-action="Create" class="btn btn-primary mt-2">Wystaw przedmiot</a>
         </div>
     }
