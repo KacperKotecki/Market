@@ -2,6 +2,9 @@ using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace Market.Web.Services;
 
@@ -16,27 +19,46 @@ public class AuctionProcessingService : IAuctionProcessingService
         _webHostEnvironment = webHostEnvironment;
     }
 
-    public async Task<List<AuctionImage>> ProcessUploadedImagesAsync(List<IFormFile> photos)
+    public async Task<List<AuctionImage>> ProcessUploadedImagesWebpAsync(List<IFormFile> photos)
     {
+        const long maxFileSize = 10 * 1024 * 1024; 
+
         var images = new List<AuctionImage>();
         if (photos == null || photos.Count == 0) return images;
 
         var uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
         if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
 
+        var encoder = new WebpEncoder { Quality = 75 };
+
         foreach (var photo in photos)
         {
-            if (photo.Length > 0)
+            if (photo.Length == 0 || photo.Length > maxFileSize) continue;
+
+            try 
             {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
+                var fileName = Guid.NewGuid().ToString() + ".webp"; 
                 var filePath = Path.Combine(uploadDir, fileName);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using (var image = await Image.LoadAsync(photo.OpenReadStream()))
                 {
-                    await photo.CopyToAsync(stream);
+                    if (image.Width > 1920 || image.Height > 1080)
+                    {
+                        image.Mutate(x => x.Resize(new ResizeOptions
+                        {
+                            Mode = ResizeMode.Max,
+                            Size = new Size(1920, 1080)
+                        }));
+                    }
+
+                    await image.SaveAsync(filePath, encoder);
                 }
-                
+
                 images.Add(new AuctionImage { ImagePath = "/uploads/" + fileName });
+            }
+            catch (Exception)
+            {
+                continue;
             }
         }
         return images;

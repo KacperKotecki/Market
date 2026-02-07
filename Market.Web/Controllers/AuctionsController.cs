@@ -93,7 +93,7 @@ public class AuctionsController : Controller
 
         if (ModelState.IsValid)
         {
-            auction.Images = await _processingService.ProcessUploadedImagesAsync(photos);
+            auction.Images = await _processingService.ProcessUploadedImagesWebpAsync(photos);
 
             await _repository.AddAsync(auction);
             await _repository.SaveChangesAsync();
@@ -139,7 +139,7 @@ public class AuctionsController : Controller
             
             if (auction.EndDate > DateTime.Now) auctionToUpdate.EndDate = auction.EndDate;
 
-            var newImages = await _processingService.ProcessUploadedImagesAsync(photos);
+            var newImages = await _processingService.ProcessUploadedImagesWebpAsync(photos);
             if (auctionToUpdate.Images == null) auctionToUpdate.Images = new List<AuctionImage>();
             foreach(var img in newImages) auctionToUpdate.Images.Add(img);
 
