@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.ViewModels;
+using Market.Web.Services.Payments;
 
 namespace Market.Web.Controllers
 {
@@ -13,11 +14,13 @@ namespace Market.Web.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly StripePaymentService _stripePaymentService;
 
-        public OrderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public OrderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, StripePaymentService stripePaymentService)
         {
             _context = context;
             _userManager = userManager;
+            _stripePaymentService = stripePaymentService;
         }
 
         [HttpGet]
@@ -110,7 +113,6 @@ namespace Market.Web.Controllers
                 order.BuyerInvoiceAddress = $"{cp.InvoiceAddress.Street}, {cp.InvoiceAddress.PostalCode} {cp.InvoiceAddress.City}, {cp.InvoiceAddress.Country}";
             }
 
-            _context.Orders.Add(order);
 
             auction.Quantity -= 1;
             if (auction.Quantity == 0)
@@ -118,9 +120,46 @@ namespace Market.Web.Controllers
                 auction.AuctionStatus = AuctionStatus.Sold;
             }
 
-            await _context.SaveChangesAsync();
+            _context.Orders.Add(order);
 
-            return RedirectToAction("OrderConfirmation", new { id = order.Id });
+            await _context.SaveChangesAsync();
+            
+            try
+            {
+                var domain = $"{Request.Scheme}://{Request.Host}";
+                
+                var checkoutUrl = await _stripePaymentService.CreateCheckoutSession(order, domain);
+                
+                return Redirect(checkoutUrl);
+            }
+            catch (Exception ex)
+            {
+                auction.Quantity += 1;
+                if (auction.AuctionStatus == AuctionStatus.Sold) 
+                    auction.AuctionStatus = AuctionStatus.Active;
+                
+                _context.Orders.Remove(order);
+                await _context.SaveChangesAsync();
+
+                TempData["Error"] = "Błąd inicjalizacji płatności. Spróbuj ponownie później.";
+                return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PaymentSuccess(int orderId, string session_id)
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null) return NotFound();
+            
+            return View("OrderConfirmation", order.Id);
+        }
+
+        [HttpGet]
+        public IActionResult PaymentCancel(int orderId)
+        {
+            TempData["Error"] = "Płatność została anulowana. Możesz spróbować ponownie w 'Moje Zakupy'.";
+            return RedirectToAction(nameof(MyOrders));
         }
 
         [HttpGet]

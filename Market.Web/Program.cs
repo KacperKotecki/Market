@@ -4,6 +4,7 @@ using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
+using Market.Web.Services.Payments;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -26,6 +27,8 @@ builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
+
+builder.Services.AddScoped<StripePaymentService>();
 
 var app = builder.Build();
 

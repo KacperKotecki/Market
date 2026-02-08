@@ -15,7 +15,9 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - OpenRouter__ApiKey=${OPENROUTER_API_KEY}
       - OpenRouter__Model=${OPENROUTER_MODEL}
-
+      - Stripe__PublishableKey=${Stripe__PublishableKey}
+      - Stripe__SecretKey=${Stripe__SecretKey}
+      - Stripe__WebhookSecret=${Stripe__WebhookSecret}
     depends_on:
       postgres-db:
         condition: service_healthy

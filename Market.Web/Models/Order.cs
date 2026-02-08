@@ -34,6 +34,10 @@ namespace Market.Web.Models
         public string? BuyerInvoiceAddress { get; set; } 
         
         public virtual Opinion? Opinion { get; set; }
+
+        public string? PaymentSessionId { get; set; }
+
+        public string? PaymentIntentId { get; set; }
     }
 
     public enum OrderStatus
