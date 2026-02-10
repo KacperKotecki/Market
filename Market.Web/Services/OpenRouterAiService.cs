@@ -10,12 +10,16 @@ public class OpenRouterAiService : IADescriptionService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
 
+    private readonly string _openruterModel;
+
     public OpenRouterAiService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
         
         var apiKey = _configuration["OpenRouter:ApiKey"];
+        _openruterModel = _configuration["OpenRouter:Model"];
+
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         
         // OpenRouter wymaga referera i tytułu strony dla statystyk
@@ -37,7 +41,6 @@ public class OpenRouterAiService : IADescriptionService
                 var fileBytes = ms.ToArray();
                 var base64 = Convert.ToBase64String(fileBytes);
 
-                // Budujemy strukturę wiadomości obrazkowej dla GPT-4o
                 imageContents.Add(new 
                 {
                     type = "image_url",
@@ -134,12 +137,11 @@ public class OpenRouterAiService : IADescriptionService
 
         var requestBody = new
         {
-            model = "openai/gpt-4o", 
+            model = _openruterModel, 
             messages = messages,
             response_format = new { type = "json_object" } // Wymuszamy tryb JSON
         };
 
-        // 3. Wysłanie żądania
         var jsonContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
         var response = await _httpClient.PostAsync("https://openrouter.ai/api/v1/chat/completions", jsonContent);
         
