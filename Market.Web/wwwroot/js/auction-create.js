@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const thumbWrapper = document.getElementById('thumbSwiperWrapper');
     const btnGenerate = document.getElementById('aiButton');
     
-    // --- FUNKCJA STARTUJĄCA SWIPERA ---
     function initSwiper() {
         new Swiper(".mySwiper", {
             spaceBetween: 10,
@@ -28,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- 1. OBSŁUGA WYBORU PLIKÓW ---
     if (fileInput) {
         fileInput.addEventListener('change', function () {
             mainWrapper.innerHTML = '';
@@ -42,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             galleryContainer.classList.remove('d-none');
 
-            // Renderowanie podglądu
             let loadedCount = 0;
             files.forEach((file) => {
                 if (!file.type.startsWith('image/')) return;
@@ -52,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     thumbWrapper.innerHTML += `<div class="swiper-slide border border-secondary"><img src="${e.target.result}" style="object-fit: contain;" /></div>`;
                     
                     loadedCount++;
-                    // Inicjuj dopiero jak wczytają się wszystkie (drobna optymalizacja)
                     if(loadedCount === files.length) {
                         setTimeout(initSwiper, 100);
                     }
@@ -61,10 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
-
-    // ==========================================
-    // 3. OBSŁUGA GENEROWANIA AI (Tylko Create - bo tylko tam jest guzik)
-    // ==========================================
     
     const spinner = document.getElementById("spinner");
     const alertBox = document.getElementById('aiErrorAlert');
@@ -107,13 +99,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         throw new Error(data.title.replace("ERROR:", "").trim());
                 }
 
-                // Wypełnianie pól
                 if (data.title) document.getElementById("Title").value = data.title;
                 if (data.description) document.getElementById("Description").value = data.description;
                 if (data.suggestedPrice) document.getElementById("Price").value = data.suggestedPrice;
-                alert(generatedByAiValue.value);
                 generatedByAiValue.value = "true";
-                alert(generatedByAiValue.value);
+
                 if (data.category) {
                     const categorySelect = document.getElementById("Category");
                     let options = Array.from(categorySelect.options);
