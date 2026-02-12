@@ -29,10 +29,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAdminService, AdminService>(); 
 builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();  
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
-
-builder.Services.AddScoped<StripePaymentService>();
+builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 
 var app = builder.Build();
 

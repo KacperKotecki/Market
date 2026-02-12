@@ -3,310 +3,175 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
-using Market.Web.Services.Payments;
-using Market.Web.Repositories;
+using Market.Web.Services;
 
-namespace Market.Web.Controllers
+namespace Market.Web.Controllers;
+
+[Authorize]
+public class OrderController : Controller
 {
-    [Authorize]
-    public class OrderController : Controller
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IOrderService _orderService;
+
+    public OrderController(
+        UserManager<ApplicationUser> userManager, 
+        IOrderService orderService) 
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly StripePaymentService _stripePaymentService;
-        private readonly IUnitOfWork _unitOfWork;
+        _userManager = userManager;
+        _orderService = orderService;
+    }
 
-        public OrderController(
-            UserManager<ApplicationUser> userManager, 
-            StripePaymentService stripePaymentService,
-            IUnitOfWork unitOfWork) 
+    [HttpGet]
+    public async Task<IActionResult> Checkout(int auctionId)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        var model = await _orderService.GetCheckoutModelAsync(auctionId, user.Id);
+        
+        if (model == null)
         {
-            _userManager = userManager;
-            _stripePaymentService = stripePaymentService;
-            _unitOfWork = unitOfWork;
+             TempData["Error"] = "Aukcja niedostępna lub próba zakupu własnego przedmiotu.";
+             return RedirectToAction("Index", "Auctions");
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Checkout(int auctionId)
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> MyOrders()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        var model = await _orderService.GetBuyerOrdersAsync(user.Id);
+        return View(model);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> MySales()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        var model = await _orderService.GetSellerSalesAsync(user.Id);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PlaceOrder(CheckoutViewModel model)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        try
         {
-            var auction = await _unitOfWork.Auctions.GetByIdAsync(auctionId);
-
-            if (auction == null || auction.Quantity <= 0 || auction.EndDate <= DateTime.Now)
-            {
-                return RedirectToAction("Index", "Auctions");
-            }
-            
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
-            if (auction.UserId == user.Id)
-            {
-                 TempData["Error"] = "Nie możesz kupić własnego przedmiotu.";
-                 return RedirectToAction("Details", "Auctions", new { id = auction.Id });
-            }
-
-            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
-
-            var model = new CheckoutViewModel
-            {
-                AuctionId = auction.Id,
-                AuctionTitle = auction.Title,
-                Price = auction.Price,
-                IsCompanySale = auction.IsCompanySale,
-                SellerName = auction.User?.UserName ?? "Nieznany",
-                ImageUrl = auction.Images.FirstOrDefault()?.ImagePath ?? "/img/placeholder.png",
-                BuyerName = userProfile != null ? $"{userProfile.FirstName} {userProfile.LastName}" : user.Email!,
-                ShippingAddress = userProfile?.ShippingAddress ?? new Address(),
-                BuyerHasCompanyProfile = userProfile?.CompanyProfile != null,
-                BuyerCompanyName = userProfile?.CompanyProfile?.CompanyName,
-                BuyerNIP = userProfile?.CompanyProfile?.NIP,
-                BuyerInvoiceAddress = userProfile?.CompanyProfile?.InvoiceAddress
-            };
-
-            return View(model);
+            var domain = $"{Request.Scheme}://{Request.Host}";
+            var checkoutUrl = await _orderService.PlaceOrderAsync(model, user.Id, domain);
+            return Redirect(checkoutUrl);
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PlaceOrder(CheckoutViewModel model)
+        catch (ArgumentException ex) 
         {
-            var auction = await _unitOfWork.Auctions.GetByIdAsync(model.AuctionId);
-            
-            if (auction == null || auction.Quantity <= 0) 
-            {
-                TempData["Error"] = "Przedmiot został właśnie sprzedany lub aukcja wygasła.";
-                return RedirectToAction("Index", "Auctions");
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
-
-            if (model.WantsInvoice && userProfile?.CompanyProfile == null)
-            {
-                ModelState.AddModelError("", "Brak danych firmy do faktury.");
-                return View("Checkout", model); 
-            }
-
-            var order = new Order
-            {
-                AuctionId = auction.Id,
-                BuyerId = user!.Id,
-                TotalPrice = auction.Price,
-                OrderDate = DateTime.Now,
-                Status = OrderStatus.Pending,
-                IsCompanyPurchase = model.WantsInvoice
-            };
-
-            if (model.WantsInvoice && userProfile?.CompanyProfile != null)
-            {
-                var cp = userProfile.CompanyProfile;
-                order.BuyerCompanyName = cp.CompanyName;
-                order.BuyerNIP = cp.NIP;
-                order.BuyerInvoiceAddress = $"{cp.InvoiceAddress.Street}, {cp.InvoiceAddress.PostalCode} {cp.InvoiceAddress.City}";
-            }
-
-            auction.Quantity -= 1;
-            if (auction.Quantity == 0) auction.AuctionStatus = AuctionStatus.Sold;
-
-            await _unitOfWork.Orders.AddAsync(order);
-            await _unitOfWork.CompleteAsync();
-            
-            try
-            {
-                var domain = $"{Request.Scheme}://{Request.Host}";
-                var checkoutUrl = await _stripePaymentService.CreateCheckoutSession(order, domain);
-                return Redirect(checkoutUrl);
-            }
-            catch (Exception)
-            {
-                auction.Quantity += 1;
-                if (auction.AuctionStatus == AuctionStatus.Sold) auction.AuctionStatus = AuctionStatus.Active;
-                _unitOfWork.Orders.Remove(order);
-                await _unitOfWork.CompleteAsync();
-
-                TempData["Error"] = "Błąd inicjalizacji płatności.";
-                return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
-            }
+            ModelState.AddModelError("", ex.Message);
+            return View("Checkout", model);
         }
-
-        [HttpGet]
-        public async Task<IActionResult> PaymentSuccess(int orderId, string session_id)
+        catch (Exception ex) 
         {
-            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
-            if (order == null) return NotFound();
-            
-            return View("OrderConfirmation", order.Id);
+            TempData["Error"] = "Wystąpił błąd: " + ex.Message;
+             return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
         }
+    }
 
-        [HttpGet]
-        public IActionResult PaymentCancel(int orderId)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateOrderStatus(int orderId, OrderStatus newStatus)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        try 
         {
-            TempData["Error"] = "Płatność została anulowana.";
-            return RedirectToAction(nameof(MyOrders));
+            await _orderService.UpdateOrderStatusAsync(orderId, newStatus, user.Id);
+            TempData["SuccessMessage"] = $"Zmieniono status na {newStatus}.";
         }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (Exception ex) { TempData["Error"] = ex.Message; }
 
-        [HttpGet]
-        public async Task<IActionResult> MyOrders()
+        return RedirectToAction(nameof(MySales));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmDelivery(int orderId)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
-
-            var orders = await _unitOfWork.Orders.GetBuyerOrdersAsync(user.Id);
-
-            var model = orders.Select(o => new MyOrderViewModel
-            {
-                OrderId = o.Id,
-                OrderDate = o.OrderDate,
-                TotalPrice = o.TotalPrice,
-                Status = o.Status,
-                IsCompanyPurchase = o.IsCompanyPurchase,
-                AuctionId = o.AuctionId,
-                AuctionTitle = o.Auction != null ? o.Auction.Title : "Oferta usunięta",
-                SellerName = o.Auction != null && o.Auction.User != null ? o.Auction.User.UserName : "Nieznany",
-                HasOpinion = o.Opinion != null,
-                MyRating = o.Opinion != null ? o.Opinion.Rating : 0,
-                ImageUrl = o.Auction != null && o.Auction.Images.Any() 
-                    ? o.Auction.Images.First().ImagePath 
-                    : "https://via.placeholder.com/150"
-            }).ToList();
-
-            return View(model);
-        }
-
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> MySales()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
-
-            var sales = await _unitOfWork.Orders.GetSellerSalesAsync(user.Id);
-
-            var model = sales.Select(o => new MySaleViewModel
-            {
-                OrderId = o.Id,
-                OrderDate = o.OrderDate,
-                TotalPrice = o.TotalPrice,
-                Status = o.Status,
-                AuctionId = o.AuctionId,
-                AuctionTitle = o.Auction?.Title ?? "Brak tytułu",
-                BuyerName = o.Buyer?.UserName ?? "Nieznany",
-                BuyerEmail = o.Buyer?.Email ?? "",
-                IsCompanyPurchase = o.IsCompanyPurchase,
-                ShippingAddressString = o.Buyer?.UserProfile?.ShippingAddress != null
-                        ? $"{o.Buyer.UserProfile.ShippingAddress.Street}, {o.Buyer.UserProfile.ShippingAddress.PostalCode} {o.Buyer.UserProfile.ShippingAddress.City}"
-                        : "Brak danych adresowych",
-                InvoiceDataString = o.IsCompanyPurchase 
-                        ? $"{o.BuyerCompanyName} (NIP: {o.BuyerNIP})\n{o.BuyerInvoiceAddress}" 
-                        : null
-            }).ToList();
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateOrderStatus(int orderId, OrderStatus newStatus)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
-
-            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
-
-            if (order == null) return NotFound();
-            if (order.Auction == null || order.Auction.UserId != user.Id) return Forbid();
-
-            order.Status = newStatus;
-            
-            await _unitOfWork.CompleteAsync();
-            
-            TempData["SuccessMessage"] = $"Zmieniono status zamówienia #{order.Id} na {newStatus}.";
-            return RedirectToAction(nameof(MySales));
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmDelivery(int orderId)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
-
-            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
-
-            if (order == null) return NotFound();
-            if (order.BuyerId != user.Id) return Forbid();
-
-            if (order.Status != OrderStatus.Shipped)
-            {
-                 TempData["Error"] = "Możesz potwierdzić odbiór tylko wysłanych zamówień.";
-                 return RedirectToAction(nameof(MyOrders));
-            }
-
-            order.Status = OrderStatus.Completed;
-
-            if(order.Auction?.User?.UserProfile != null)
-            {
-                order.Auction.User.UserProfile.WalletBalance += order.TotalPrice;
-            }
-            
-            await _unitOfWork.CompleteAsync();
-            
+            await _orderService.ConfirmDeliveryAsync(orderId, user.Id);
             TempData["SuccessMessage"] = "Transakcja zakończona pomyślnie.";
-            return RedirectToAction(nameof(MyOrders));
         }
+        catch (Exception ex) { TempData["Error"] = ex.Message; }
 
-        [HttpGet]
-        public async Task<IActionResult> Rate(int id)
+        return RedirectToAction(nameof(MyOrders));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Rate(int id)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        var model = await _orderService.GetRateOrderModelAsync(id, user.Id);
+        
+        if (model == null) return NotFound();
+        
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Rate(RateOrderViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-            var order = await _unitOfWork.Orders.GetByIdAsync(id);
-
-            if (order == null) return NotFound();
-            if (order.BuyerId != user.Id) return Forbid();
-            if (order.Status == OrderStatus.Pending) return BadRequest("Zamówienie nieopłacone.");
-            if (order.Opinion != null) return BadRequest("Już oceniono.");
-
-            var model = new RateOrderViewModel
-            {
-                OrderId = order.Id,
-                AuctionTitle = order.Auction?.Title ?? "Usunięta",
-                SellerName = order.Auction?.User?.UserName ?? "Nieznany",
-                ImageUrl = order.Auction?.Images?.FirstOrDefault()?.ImagePath ?? "https://via.placeholder.com/150"
-            };
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Rate(RateOrderViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            var user = await _userManager.GetUserAsync(User);
-            var order = await _unitOfWork.Orders.GetByIdAsync(model.OrderId); // ZMIANA
-
-            if (order == null || order.BuyerId != user.Id) return Forbid();
-            if (order.Opinion != null) return BadRequest("Już oceniono.");
-
-            var opinion = new Opinion
-            {
-                OrderId = order.Id,
-                BuyerId = user.Id,
-                SellerId = order.Auction!.UserId,
-                Comment = model.Comment,
-                Rating = model.Rating,
-                CreatedAt = DateTime.Now
-            };
-
-            await _unitOfWork.Orders.AddOpinionAsync(opinion);
-            await _unitOfWork.CompleteAsync();
-
+            await _orderService.AddOpinionAsync(model, user.Id);
             TempData["SuccessMessage"] = "Opinię dodano pomyślnie.";
             return RedirectToAction(nameof(MyOrders));
         }
-
-        public IActionResult OrderConfirmation(int id)
+        catch (Exception ex)
         {
-            return View(id);
+            TempData["Error"] = ex.Message;
+            return RedirectToAction(nameof(MyOrders));
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> PaymentSuccess(int orderId, string session_id)
+    {
+        var order = await _orderService.GetOrderByIdAsync(orderId);
+        if (order == null) return NotFound();
+        return View("OrderConfirmation", order.Id);
+    }
+
+    [HttpGet]
+    public IActionResult PaymentCancel(int orderId)
+    {
+        TempData["Error"] = "Płatność została anulowana.";
+        return RedirectToAction(nameof(MyOrders));
+    }
+
+    public IActionResult OrderConfirmation(int id)
+    {
+        return View(id);
+    }
+
+    private async Task<ApplicationUser> GetCurrentUserAsync() => await _userManager.GetUserAsync(User);
 }

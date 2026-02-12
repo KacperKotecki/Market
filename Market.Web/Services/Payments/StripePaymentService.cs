@@ -4,7 +4,7 @@ using Stripe.Checkout;
 
 namespace Market.Web.Services.Payments
 {
-    public class StripePaymentService
+    public class StripePaymentService : IPaymentService
     {
         private readonly IConfiguration _configuration;
 
