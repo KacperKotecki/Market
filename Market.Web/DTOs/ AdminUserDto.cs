@@ -1,6 +1,6 @@
 using System;
 
-namespace Market.Web.Models.Admin;
+namespace Market.Web.DTOs;
 
 public class AdminUserDto
 {

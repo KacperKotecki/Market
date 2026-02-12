@@ -1,6 +1,6 @@
-using Market.Web.Models; // Dla AuctionStatus
+using Market.Web.Models;
 
-namespace Market.Web.Models.Admin;
+namespace Market.Web.DTOs;
 
 public class AdminAuctionDto
 {
