@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.ViewModels;
+using Market.Web.Repositories;
 
 namespace Market.Web.Controllers
 {
@@ -12,24 +11,26 @@ namespace Market.Web.Controllers
     public class ProfileController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ApplicationDbContext _context;
+        private readonly IProfileRepository _profileRepository;
+        private readonly IOrderRepository _orderRepository;
 
-        public ProfileController(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
+        public ProfileController(
+            UserManager<ApplicationUser> userManager, 
+            IProfileRepository profileRepository,
+            IOrderRepository orderRepository)
         {
             _userManager = userManager;
-            _context = context;
+            _profileRepository = profileRepository;
+            _orderRepository = orderRepository;
         }
 
-        // GET: /Profile/EditProfile
         [HttpGet]
         public async Task<IActionResult> EditProfile()
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            var userProfile = await _context.UserProfiles
-                .Include(p => p.CompanyProfile)
-                .FirstOrDefaultAsync(p => p.UserId == user.Id);
+            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
 
             var model = new EditProfileViewModel
             {
@@ -49,7 +50,6 @@ namespace Market.Web.Controllers
             return View(model);
         }
 
-        // POST: /Profile/EditProfile
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(EditProfileViewModel model)
@@ -75,14 +75,12 @@ namespace Market.Web.Controllers
                 return View(model);
             }
 
-            var userProfile = await _context.UserProfiles
-                .Include(p => p.CompanyProfile)
-                .FirstOrDefaultAsync(p => p.UserId == user.Id);
+            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
 
             if (userProfile == null)
             {
                 userProfile = new UserProfile { UserId = user.Id };
-                _context.UserProfiles.Add(userProfile);
+                await _profileRepository.AddAsync(userProfile);
             }
 
             userProfile.FirstName = model.FirstName;
@@ -106,12 +104,12 @@ namespace Market.Web.Controllers
             {
                 if (userProfile.CompanyProfile != null)
                 {
-                    _context.CompanyProfiles.Remove(userProfile.CompanyProfile);
+                    _profileRepository.RemoveCompanyProfile(userProfile.CompanyProfile);
                     userProfile.CompanyProfile = null;
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _profileRepository.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Profil został zaktualizowany.";
             return RedirectToAction("Index", "Home");
@@ -123,15 +121,9 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var userProfile = await _context.UserProfiles
-                .FirstOrDefaultAsync(p => p.UserId == user.Id);
+            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
 
-            var sales = await _context.Orders
-                .Include(o => o.Auction)
-                .Include(o => o.Buyer)
-                .Where(o => o.Auction.UserId == user.Id)
-                .OrderByDescending(o => o.OrderDate)
-                .ToListAsync();
+            var sales = await _orderRepository.GetSellerSalesAsync(user.Id);
 
             decimal pending = sales
                 .Where(o => o.Status == OrderStatus.Paid || o.Status == OrderStatus.Shipped)
@@ -164,8 +156,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
             
-            var userProfile = await _context.UserProfiles
-                .FirstOrDefaultAsync(p => p.UserId == user.Id);
+            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
 
             if (userProfile == null) return NotFound();
 
@@ -185,7 +176,7 @@ namespace Market.Web.Controllers
             
             userProfile.WalletBalance = 0;
             
-            await _context.SaveChangesAsync();
+            await _profileRepository.SaveChangesAsync();
 
             TempData["SuccessMessage"] = $"Zlecono wypłatę {amountToWithdraw:N2} PLN na konto {userProfile.PrivateIBAN}.";
             return RedirectToAction(nameof(MyFinances));

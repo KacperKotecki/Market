@@ -5,6 +5,7 @@ using Market.Web.Data;
 using Market.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using Stripe.V2.Core;
+using Market.Web.Repositories;
 
 namespace Market.Web.Controllers
 {
@@ -75,18 +76,27 @@ namespace Market.Web.Controllers
 
         private async Task MarkOrderAsPaid(int orderId)
         {
+        
             using (var scope = _scopeFactory.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                
-                var order = await db.Orders.FindAsync(orderId);
 
-                if (order != null && order.Status == OrderStatus.Pending)
+                var orderRepo = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+                
+                var order = await orderRepo.GetByIdAsync(orderId);
+
+                if (order == null)
+                {
+                    _logger.LogError($"Zamówienie {orderId} nie znalezione.");
+                    return;
+                }
+
+                if (order.Status == OrderStatus.Pending)
                 {
                     order.Status = OrderStatus.Paid;
 
-                    _logger.LogInformation("Status zmianiony : Paid", orderId);
-                    await db.SaveChangesAsync();
+                    await orderRepo.SaveChangesAsync();
+                    
+                    _logger.LogInformation($"Zamówienie {orderId} opłacone pomyślnie.");
                 }
             }
         }

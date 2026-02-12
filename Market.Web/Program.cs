@@ -24,6 +24,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 

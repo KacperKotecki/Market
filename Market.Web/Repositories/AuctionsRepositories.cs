@@ -20,7 +20,17 @@ public class AuctionRepository : IAuctionRepository
             .Include(x => x.Images) 
             .ToListAsync();
     }
-
+    public async Task<List<Auction>> GetUserAuctionsAsync(string userId)
+    {
+        return await _context.Auctions
+            .Include(a => a.Images)
+            .Include(a => a.Orders)
+                .ThenInclude(o => o.Opinion)
+                    .ThenInclude(op => op.Buyer)
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+    }
     public async Task<Auction?> GetByIdAsync(int id)
     {
         return await _context.Auctions

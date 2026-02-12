@@ -5,17 +5,18 @@ using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Webp;
+using Market.Web.Repositories;
 
 namespace Market.Web.Services;
 
 public class AuctionProcessingService : IAuctionProcessingService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IAuctionRepository _auctionRepository;
     private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public AuctionProcessingService(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+    public AuctionProcessingService(IAuctionRepository auctionRepository, IWebHostEnvironment webHostEnvironment)
     {
-        _context = context;
+        _auctionRepository = auctionRepository;
         _webHostEnvironment = webHostEnvironment;
     }
 
@@ -66,14 +67,8 @@ public class AuctionProcessingService : IAuctionProcessingService
 
     public async Task<List<MyAuctionViewModel>> GetUserAuctionsViewModelAsync(string userId)
     {
-        var auctions = await _context.Auctions
-            .Include(a => a.Images)
-            .Include(a => a.Orders)
-                .ThenInclude(o => o.Opinion)
-                    .ThenInclude(op => op.Buyer)
-            .Where(a => a.UserId == userId)
-            .OrderByDescending(a => a.CreatedAt)
-            .ToListAsync();
+        var auctions = await _auctionRepository.GetUserAuctionsAsync(userId);
+
 
         return auctions.Select(a => 
         {
