@@ -2,12 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Market.Web.Data;
-using Market.Web.Models;
+using Market.Web.Persistence;
+using Market.Web.Core.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
 using Market.Web.Authorization;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Market.Web.Controllers;
 

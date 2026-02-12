@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Market.Web.Data;
+using Market.Web.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 

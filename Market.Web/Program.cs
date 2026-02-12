@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Market.Web.Data;
-using Market.Web.Models;
+using Market.Web.Persistence.Data;
+using Market.Web.Core.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
 using Market.Web.Services.Payments;

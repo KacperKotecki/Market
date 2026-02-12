@@ -1,5 +1,5 @@
-using Market.Web.Models;
-using Market.Web.ViewModels;
+using Market.Web.Core.Models;
+using Market.Web.Core.ViewModels;
 
 namespace Market.Web.Services;
 

@@ -73,8 +73,8 @@
                     @foreach (var t in Model.Transactions)
                     {
                         string rowClass = "";
-                        if (t.Status == Market.Web.Models.OrderStatus.Completed) { rowClass = "fw-bold"; }
-                        else if (t.Status == Market.Web.Models.OrderStatus.Cancelled) { rowClass = "text-decoration-line-through text-muted opacity-50"; }
+                        if (t.Status == Market.Web.Core.Models.OrderStatus.Completed) { rowClass = "fw-bold"; }
+                        else if (t.Status == Market.Web.Core.Models.OrderStatus.Cancelled) { rowClass = "text-decoration-line-through text-muted opacity-50"; }
 
                         <tr class="@rowClass">
                             <td class="ps-4 text-muted small">@t.Date.ToString("dd.MM.yyyy")</td>
@@ -84,15 +84,15 @@
                             </td>
                             <td>@t.BuyerName</td>
                             <td class="text-center">
-                                @if(t.Status == Market.Web.Models.OrderStatus.Completed)
+                                @if(t.Status == Market.Web.Core.Models.OrderStatus.Completed)
                                 {
                                     <span class="badge bg-success text-white">Dostępne</span>
                                 }
-                                else if(t.Status == Market.Web.Models.OrderStatus.Pending)
+                                else if(t.Status == Market.Web.Core.Models.OrderStatus.Pending)
                                 {
                                     <span class="badge bg-secondary">Oczekiwanie</span>
                                 }
-                                else if(t.Status == Market.Web.Models.OrderStatus.Paid || t.Status == Market.Web.Models.OrderStatus.Shipped)
+                                else if(t.Status == Market.Web.Core.Models.OrderStatus.Paid || t.Status == Market.Web.Core.Models.OrderStatus.Shipped)
                                 {
                                     <span class="badge bg-warning text-dark">Zamrożone</span>
                                 }
@@ -101,7 +101,7 @@
                                     <span class="badge bg-danger">Anulowane</span>
                                 }
                             </td>
-                            <td class="text-end pe-4 @(t.Status == Market.Web.Models.OrderStatus.Completed ? "text-success" : "")">
+                            <td class="text-end pe-4 @(t.Status == Market.Web.Core.Models.OrderStatus.Completed ? "text-success" : "")">
                                 + @t.Amount.ToString("N2") zł
                             </td>
                         </tr>

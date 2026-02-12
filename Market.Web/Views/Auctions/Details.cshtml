@@ -1,4 +1,4 @@
-@model Market.Web.Models.Auction
+@model Market.Web.Core.Models.Auction
 
 @{
     ViewData["Title"] = "Szczegóły Aukcji";
@@ -108,7 +108,7 @@
                     </div>
 
                     <div class="mt-auto">
-                        @if (Model.AuctionStatus == Market.Web.Models.AuctionStatus.Active && Model.Quantity > 0 && Model.EndDate > DateTime.Now)
+                        @if (Model.AuctionStatus == Market.Web.Core.Models.AuctionStatus.Active && Model.Quantity > 0 && Model.EndDate > DateTime.Now)
                         {
                             <a asp-controller="Order" asp-action="Checkout" asp-route-auctionId="@Model.Id" class="btn btn-success btn-lg w-100">
                                 KUP TERAZ

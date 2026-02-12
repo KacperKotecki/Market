@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using Stripe.Checkout;
-using Market.Web.Data;
-using Market.Web.Models;
+using Market.Web.Persistence.Data;
+using Market.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using Stripe.V2.Core;
 using Market.Web.Repositories;

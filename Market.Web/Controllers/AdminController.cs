@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Market.Web.Services;
-using Market.Web.Models;
+using Market.Web.Core.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace Market.Web.Controllers;

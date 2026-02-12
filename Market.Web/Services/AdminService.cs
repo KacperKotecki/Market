@@ -1,8 +1,8 @@
-using Market.Web.Data;
-using Market.Web.Models.Admin;
+using Market.Web.Persistence.Data;
+using Market.Web.Core.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Market.Web.ViewModels;
-using Market.Web.Models;
+using Market.Web.Core.ViewModels;
+using Market.Web.Core.Models;
 
 namespace Market.Web.Services;
 

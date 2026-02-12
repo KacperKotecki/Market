@@ -1,11 +1,13 @@
-using Market.Web.Data;
-using Market.Web.Models;
-using Market.Web.ViewModels;
+using Market.Web.Persistence.Data;
+using Market.Web.Core.Models;
+using Market.Web.Core.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Webp;
 using Market.Web.Repositories;
+using Market.Web.Services;
+using Market.Web.Core.ViewModels;
 
 namespace Market.Web.Services;
 

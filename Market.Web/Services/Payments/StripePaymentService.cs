@@ -1,4 +1,4 @@
-using Market.Web.Models;
+using Market.Web.Core.Models;
 using Stripe;
 using Stripe.Checkout;
 

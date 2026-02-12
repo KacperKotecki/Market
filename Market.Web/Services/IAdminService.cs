@@ -1,5 +1,5 @@
-using Market.Web.Models.Admin;
-using Market.Web.ViewModels;
+using Market.Web.Core.DTOs;
+using Market.Web.Core.ViewModels;
 
 namespace Market.Web.Services;
 

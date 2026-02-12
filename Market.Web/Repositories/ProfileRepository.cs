@@ -1,5 +1,5 @@
-using Market.Web.Data;
-using Market.Web.Models;
+using Market.Web.Persistence.Data;
+using Market.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Market.Web.Repositories;
