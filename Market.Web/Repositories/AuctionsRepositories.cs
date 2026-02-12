@@ -44,5 +44,8 @@ public class AuctionRepository : IAuctionRepository
         _context.Auctions.Add(auction);
         await _context.SaveChangesAsync(); 
     }
-    
+    public async Task UpdateAsync(Auction auction)
+    {
+        _context.Auctions.Update(auction);
+    }
 }

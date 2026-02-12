@@ -11,4 +11,5 @@ public interface IAuctionRepository
     
     Task AddAsync(Auction auction);
     
+    Task UpdateAsync(Auction auction);
 }

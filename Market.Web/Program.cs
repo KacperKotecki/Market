@@ -27,6 +27,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IAdminService, AdminService>(); 
+builder.Services.AddScoped<IAuctionService, AuctionService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();  
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
 
