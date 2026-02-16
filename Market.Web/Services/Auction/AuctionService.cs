@@ -30,6 +30,8 @@ public class AuctionService : IAuctionService
 
         if (auction.CreatedAt == default) auction.CreatedAt = DateTime.Now;
 
+        auction.AuctionStatus = AuctionStatus.Active; 
+
         await _unitOfWork.Auctions.AddAsync(auction);
         await _unitOfWork.CompleteAsync();
     }
