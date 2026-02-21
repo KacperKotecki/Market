@@ -5,6 +5,8 @@ using Market.Web.Services;
 using Market.Web.Core.Models;
 using Market.Web.Repositories;
 using Market.Web.Core.ViewModels;
+using NUnit.Framework.Internal;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 
 namespace Market.Tests;
 
@@ -40,132 +42,8 @@ public class OrderServiceTests
         _orderService = new OrderService(_unitOfWorkMock.Object, _profileServiceMock.Object, _paymentServiceMock.Object);
     }
 
-    [Test]
-    public async Task UpdateOrderStatusAsync_ShouldChangeStatusToInput_WhenUserIsSeller()
-    {
-        // Arrange
-        var expectedStatus = OrderStatus.Paid;
-        var sellerId = "sellerId";
-        
-        var auction = TestDataFactory.CreateAuction(userId: sellerId);
-        var order = TestDataFactory.CreateOrder(id: 1, auction: auction);
-        
-        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
 
-        // Act
-        await _orderService.UpdateOrderStatusAsync(order.Id, expectedStatus, sellerId);
-
-        // Assert
-        order.Status.Should().Be(expectedStatus); 
-        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
-    }
-
-    [Test]
-    public async Task UpdateOrderStatusAsync_ShouldThrowUnauthorizedAccessException_WhenUserIsNotSeller()
-    {
-        // Arrange
-        var sellerId = "sellerId";
-        var otherUserId = "otherUserId"; // Ktoś kto próbuje zmienić status, ale nie jest sprzedawcą
-
-        var auction = TestDataFactory.CreateAuction(userId: sellerId);
-        var order = TestDataFactory.CreateOrder(id: 1, auction: auction);
-       
-        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
-
-        // Act
-        Func<Task> action = async() => await _orderService.UpdateOrderStatusAsync(order.Id, OrderStatus.Paid, otherUserId);
-
-        // Assert
-        await action.Should().ThrowAsync<UnauthorizedAccessException>(); 
-        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
-    }
-
-    [Test]
-    public async Task MarkOrderAsPaidAsync_ShouldChangeStatusToPaid_WhenOrderIsPending()
-    {
-        // Arrange
-        var order = TestDataFactory.CreateOrder(id: 1);
-        order.Status = OrderStatus.Pending; // Upewniamy się, że status jest Pending
-
-        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
-
-        // Act
-        await _orderService.MarkOrderAsPaidAsync(order.Id);
-
-        // Assert
-        order.Status.Should().Be(OrderStatus.Paid);
-        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
-    }
-
-    [Test]
-    public async Task MarkOrderAsPaidAsync_ShouldNotChangeStatus_WhenOrderIsNotPending()
-    {
-        // Arrange
-        var initialStatus = OrderStatus.Cancelled;
-        var order = TestDataFactory.CreateOrder(id: 1);
-        order.Status = initialStatus;
-
-        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
-
-        // Act
-        await _orderService.MarkOrderAsPaidAsync(order.Id);
-
-        // Assert
-        order.Status.Should().Be(initialStatus);
-        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
-    }
-
-    [Test]
-    public async Task MarkOrderAsPaidAsync_ShouldDoNothing_WhenOrderDefaultsToNull()
-    {
-        // Arrange
-        var orderId = 999;
-        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(orderId)).ReturnsAsync((Order)null);
-
-        // Act
-        await _orderService.MarkOrderAsPaidAsync(orderId);
-
-        // Assert
-        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
-    }
-
-    [Test]
-    public async Task AddOpinionAsync_ShouldAddOpinion_WhenItIsYourOrder()
-    {
-        // Arrange
-        var orderId = 1;
-        var buyerId = "buyer1";
-        var sellerId = "seller1";
-
-        var auction = TestDataFactory.CreateAuction(userId: sellerId);
-        var order = TestDataFactory.CreateOrder(id: orderId, auction: auction);
-        order.BuyerId = buyerId;
-        order.Opinion = null; 
-
-        var model = new RateOrderViewModel
-        {
-            OrderId = orderId,
-            Rating = 5,
-            Comment = "Great service!"
-        };
-
-        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(orderId)).ReturnsAsync(order);
-
-        // Act
-        await _orderService.AddOpinionAsync(model, buyerId);
-
-        // Assert
-        _unitOfWorkMock.Verify(u => u.Orders.AddOpinionAsync(It.Is<Opinion>(op => 
-            op.OrderId == orderId &&
-            op.BuyerId == buyerId &&
-            op.SellerId == sellerId &&
-            op.Rating == model.Rating &&
-            op.Comment == model.Comment
-        )), Times.Once);
-
-        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
-    }
-
+    #region GetCheckoutModelAsync
     [Test]
     public async Task GetCheckoutModelAsync_ShouldCreateViewModel_WhenAuctionAndUserExists()
     {
@@ -195,6 +73,21 @@ public class OrderServiceTests
     }
 
     [Test]
+    public async Task GetCheckoutModelAsync_ShouldReturnNull_WhenUserIsSeller()
+    {
+        var id = 1;
+        var userId = "sellerID";
+        var auction = TestDataFactory.CreateAuction(id);
+        auction.UserId = userId;
+
+        _unitOfWorkMock.Setup(u => u.Auctions.GetByIdAsync(id)).ReturnsAsync(auction);
+
+        var results = await _orderService.GetCheckoutModelAsync(id, userId);
+
+        results.Should().BeNull();
+    }
+
+    [Test]
     public async Task GetCheckoutModelAsync_ShouldReturnNull_WhenAuctionIsSoldOut()
     {
         // Arrange
@@ -213,6 +106,40 @@ public class OrderServiceTests
         viewModel.Should().BeNull();
     }
 
+    [Test]
+    public async Task GetCheckoutModelAsync_ShouldReturnNull_WhenAuctionEndDatePassed()
+    {
+        var id = 1;
+        var buyerId = "buyerID";
+        var auction = TestDataFactory.CreateAuction(id);
+        auction.EndDate = DateTime.Now.AddDays(-1);
+
+        _unitOfWorkMock.Setup(u => u.Auctions.GetByIdAsync(id)).ReturnsAsync(auction);
+
+        var results = await _orderService.GetCheckoutModelAsync(id, buyerId);
+
+        results.Should().BeNull();
+    }
+
+    #endregion
+
+
+    #region GetBuyerOrdersAsync
+    // GetBuyerOrdersAsync tests 
+    #endregion
+
+
+    #region GetSellerSalesAsync
+    // GetSellerSalesAsync tests
+    #endregion
+
+
+    #region GetRateOrderModelAsync
+    // GetRateOrderModelAsync tests
+    #endregion
+
+
+    #region PlaceOrderAsync
     [Test]
     public async Task PlaceOrderAsync_ShouldCreateOrderAndDecrementsQuantity_WhenDataIsCorrect()
     {
@@ -284,6 +211,128 @@ public class OrderServiceTests
     }
 
     [Test]
+    public async Task PlaceOrderAsync_ShouldThrowInvalidOperationException_WhenAuctionIsSoldOut()
+    {
+        var id = 1;
+        var buyerId = "buyerId";
+
+        var auction = TestDataFactory.CreateAuction(id);
+        auction.Quantity = 0;
+
+        _unitOfWorkMock.Setup(u => u.Auctions.GetByIdAsync(id)).ReturnsAsync(auction);
+
+        var model = new CheckoutViewModel{ AuctionId = id};
+
+        Func<Task> action = async() => await _orderService.PlaceOrderAsync(model, buyerId, "domain");
+
+        await action.Should().ThrowAsync<InvalidOperationException>();
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task PlaceOrderAsync_ShouldThrowArgumentException_WhenWantsInvoiceIsTrueButUserHasNoCompany()
+    {
+        var id = 1;
+        var buyerId = "buyerId";
+
+        var user = TestDataFactory.CreateUserProfile();
+        user.CompanyProfile = null;
+        var auction = TestDataFactory.CreateAuction(id);
+
+        _unitOfWorkMock.Setup(u => u.Auctions.GetByIdAsync(id)).ReturnsAsync(auction);
+        _profileServiceMock.Setup(p => p.GetByUserIdAsync(buyerId)).ReturnsAsync(user);
+
+        var model = new CheckoutViewModel{
+            AuctionId = id,
+            WantsInvoice = true
+            };
+
+        Func<Task> action= async() => await _orderService.PlaceOrderAsync(model, buyerId, "domain");
+
+        await action.Should().ThrowAsync<ArgumentException>();
+
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+
+    }
+
+    [Test]
+    public async Task PlaceOrderAsync_ShouldRollbackQuantityAndStatus_WhenPaymentServiceThrowsException()
+    {
+        var id = 1;
+        var buyerId = "buyerId";
+
+        var user = TestDataFactory.CreateUserProfile();
+        var auction = TestDataFactory.CreateAuction(id);
+        auction.AuctionStatus = AuctionStatus.Active;
+        auction.Price = 100;
+        auction.Quantity = 1;
+
+        _unitOfWorkMock.Setup(u => u.Auctions.GetByIdAsync(id)).ReturnsAsync(auction);
+        _profileServiceMock.Setup(p => p.GetByUserIdAsync(buyerId)).ReturnsAsync(user);
+
+        var model = new CheckoutViewModel{
+            AuctionId = id,
+            WantsInvoice = false
+            };
+        _paymentServiceMock.Setup(p => p.CreateCheckoutSession(It.IsAny<Order>(), It.IsAny<string>()))
+                           .ThrowsAsync(new Exception("Payment error"));
+        Func<Task> action = async () => await _orderService.PlaceOrderAsync(model, buyerId, "domain");
+
+        await action.Should().ThrowAsync<Exception>().WithMessage("Payment error");
+
+        auction.Quantity.Should().Be(1);
+        auction.AuctionStatus.Should().Be(AuctionStatus.Active);
+        _unitOfWorkMock.Verify(u => u.Orders.Remove(It.IsAny<Order>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Exactly(2));
+    }
+    #endregion
+
+
+    #region UpdateOrderStatusAsync
+    [Test]
+    public async Task UpdateOrderStatusAsync_ShouldChangeStatusToInput_WhenUserIsSeller()
+    {
+        // Arrange
+        var expectedStatus = OrderStatus.Paid;
+        var sellerId = "sellerId";
+        
+        var auction = TestDataFactory.CreateAuction(userId: sellerId);
+        var order = TestDataFactory.CreateOrder(id: 1, auction: auction);
+        
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
+
+        // Act
+        await _orderService.UpdateOrderStatusAsync(order.Id, expectedStatus, sellerId);
+
+        // Assert
+        order.Status.Should().Be(expectedStatus); 
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task UpdateOrderStatusAsync_ShouldThrowUnauthorizedAccessException_WhenUserIsNotSeller()
+    {
+        // Arrange
+        var sellerId = "sellerId";
+        var otherUserId = "otherUserId";
+
+        var auction = TestDataFactory.CreateAuction(userId: sellerId);
+        var order = TestDataFactory.CreateOrder(id: 1, auction: auction);
+       
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
+
+        // Act
+        Func<Task> action = async() => await _orderService.UpdateOrderStatusAsync(order.Id, OrderStatus.Paid, otherUserId);
+
+        // Assert
+        await action.Should().ThrowAsync<UnauthorizedAccessException>(); 
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+    #endregion
+
+
+    #region ConfirmDeliveryAsync
+    [Test]
     public async Task ConfirmDeliveryAsync_ShouldAddFundsToSellerWallet_WhenOrderIsShipped()
     {
         // Arrange
@@ -314,6 +363,24 @@ public class OrderServiceTests
     }
 
     [Test]
+    public async Task ConfirmDeliveryAsync_ShouldThrowUnauthorizedAccessException_WhenUserIsNotBuyer()
+    {
+        var otherId = "ottherID";
+        var buyerId = "buyerId";
+
+        var order = TestDataFactory.CreateOrder();
+        order.BuyerId = buyerId;
+        order.Status = OrderStatus.Shipped;
+
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
+
+        Func<Task> action = async() => await _orderService.ConfirmDeliveryAsync(order.Id, otherId);
+
+        await action.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("Brak uprawnień do zamówienia.");
+    }
+
+
+    [Test]
     public async Task ConfirmDeliveryAsync_ShouldThrowException_WhenOrderIsNotShipped()
     {
         // Arrange
@@ -332,4 +399,169 @@ public class OrderServiceTests
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*tylko wysłane*"); 
     }
+    #endregion
+
+
+    #region AddOpinionAsync
+    [Test]
+    public async Task AddOpinionAsync_ShouldAddOpinion_WhenItIsYourOrder()
+    {
+        // Arrange
+        var orderId = 1;
+        var buyerId = "buyer1";
+        var sellerId = "seller1";
+
+        var auction = TestDataFactory.CreateAuction(userId: sellerId);
+        var order = TestDataFactory.CreateOrder(id: orderId, auction: auction);
+        order.BuyerId = buyerId;
+        order.Opinion = null; 
+
+        var model = new RateOrderViewModel
+        {
+            OrderId = orderId,
+            Rating = 5,
+            Comment = "Great service!"
+        };
+
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(orderId)).ReturnsAsync(order);
+
+        // Act
+        await _orderService.AddOpinionAsync(model, buyerId);
+
+        // Assert
+        _unitOfWorkMock.Verify(u => u.Orders.AddOpinionAsync(It.Is<Opinion>(op => 
+            op.OrderId == orderId &&
+            op.BuyerId == buyerId &&
+            op.SellerId == sellerId &&
+            op.Rating == model.Rating &&
+            op.Comment == model.Comment
+        )), Times.Once);
+
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+
+    [Test]
+    public async Task AddOpinionAsync_ShouldThrowUnauthorizedAccessException_WhenUserIsNotBuyer()
+    {
+        var id = 1;
+        var buyerId = "buyerId";
+        var otherUserId = "otherUserId";
+        var order = TestDataFactory.CreateOrder(id);
+        order.BuyerId = buyerId;
+
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(id)).ReturnsAsync(order);
+
+        var model = new RateOrderViewModel
+        {
+            OrderId = id,
+            Rating = 5,
+            Comment = "Great service!"
+        };
+
+        Func<Task> action = async() => await _orderService.AddOpinionAsync(model, otherUserId);
+
+        await action.Should().ThrowAsync<UnauthorizedAccessException>();
+
+        _unitOfWorkMock.Verify(u => u.Orders.AddOpinionAsync(It.IsAny<Opinion>()), Times.Never);
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+
+    }
+
+    [Test]
+    public async Task AddOpinionAsync_ShouldThrowInvalidOperationException_WhenOpinionAlreadyExists()
+    {
+        var id = 1;
+        var buyerId = "buyerId";
+        var sellerId = "sellerId";
+
+        var opinion = new Opinion
+        {
+            OrderId = id,
+            BuyerId = buyerId,
+            SellerId = sellerId,
+            Comment = "Comment",
+            Rating = 5,
+            CreatedAt = DateTime.Today
+        };
+
+  
+        var order = TestDataFactory.CreateOrder(id);
+        order.BuyerId = buyerId;
+        order.Opinion = opinion;
+
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(id)).ReturnsAsync(order);
+
+        var model = new RateOrderViewModel
+        {
+            OrderId = id,
+            Rating = 5,
+            Comment = "Great service!"
+        };
+
+
+
+        Func<Task> action = async() => await _orderService.AddOpinionAsync(model, buyerId);
+
+        await action.Should().ThrowAsync<InvalidOperationException>().WithMessage("Już oceniono.");
+
+        _unitOfWorkMock.Verify(u => u.Orders.AddOpinionAsync(It.IsAny<Opinion>()), Times.Never);
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+    #endregion
+
+
+    #region MarkOrderAsPaidAsync
+    [Test]
+    public async Task MarkOrderAsPaidAsync_ShouldChangeStatusToPaid_WhenOrderIsPending()
+    {
+        // Arrange
+        var order = TestDataFactory.CreateOrder(id: 1);
+        order.Status = OrderStatus.Pending; // Upewniamy się, że status jest Pending
+
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
+
+        // Act
+        await _orderService.MarkOrderAsPaidAsync(order.Id);
+
+        // Assert
+        order.Status.Should().Be(OrderStatus.Paid);
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task MarkOrderAsPaidAsync_ShouldNotChangeStatus_WhenOrderIsNotPending()
+    {
+        // Arrange
+        var initialStatus = OrderStatus.Cancelled;
+        var order = TestDataFactory.CreateOrder(id: 1);
+        order.Status = initialStatus;
+
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(order.Id)).ReturnsAsync(order);
+
+        // Act
+        await _orderService.MarkOrderAsPaidAsync(order.Id);
+
+        // Assert
+        order.Status.Should().Be(initialStatus);
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task MarkOrderAsPaidAsync_ShouldDoNothing_WhenOrderDefaultsToNull()
+    {
+        // Arrange
+        var orderId = 999;
+        _unitOfWorkMock.Setup(u => u.Orders.GetByIdAsync(orderId)).ReturnsAsync((Order)null);
+
+        // Act
+        await _orderService.MarkOrderAsPaidAsync(orderId);
+
+        // Assert
+        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+    #endregion
+    
+
+    
 }
