@@ -19,6 +19,11 @@ public class UnitOfWork : IUnitOfWork
     public IOrderRepository Orders { get; private set; }
     public IProfileRepository Profiles { get; private set; }
 
+    public Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync()
+    {
+        return _context.Database.BeginTransactionAsync();
+    }
+
     public async Task CompleteAsync()
     {
         await _context.SaveChangesAsync();

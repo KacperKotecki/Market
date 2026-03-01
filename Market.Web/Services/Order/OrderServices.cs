@@ -2,6 +2,7 @@ using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Repositories;
 using Market.Web.Services.Payments;
+using Market.Web.Core.Exceptions;
 
 namespace Market.Web.Services;
 
@@ -110,51 +111,54 @@ public class OrderService : IOrderService
     }
     public async Task<string> PlaceOrderAsync(CheckoutViewModel model, string userId, string domain)
     {
-        var auction = await _unitOfWork.Auctions.GetByIdAsync(model.AuctionId);
-        if (auction == null || auction.Quantity <= 0) throw new InvalidOperationException("Aukcja niedostępna.");
-
-        var userProfile = await _profileService.GetByUserIdAsync(userId);
-
-        if (model.WantsInvoice && userProfile?.CompanyProfile == null)
-            throw new ArgumentException("Brak danych firmy do faktury.");
-
-        var order = new Order
-        {
-            AuctionId = auction.Id,
-            BuyerId = userId,
-            TotalPrice = auction.Price,
-            OrderDate = DateTime.Now,
-            Status = OrderStatus.Pending,
-            IsCompanyPurchase = model.WantsInvoice
-        };
-
-        if (model.WantsInvoice && userProfile?.CompanyProfile != null)
-        {
-            var cp = userProfile.CompanyProfile;
-            order.BuyerCompanyName = cp.CompanyName;
-            order.BuyerNIP = cp.NIP;
-            order.BuyerInvoiceAddress = $"{cp.InvoiceAddress.Street}, {cp.InvoiceAddress.PostalCode} {cp.InvoiceAddress.City}";
-        }
-
-        auction.Quantity -= 1;
-        if (auction.Quantity == 0) auction.AuctionStatus = AuctionStatus.Sold;
-
-        await _unitOfWork.Orders.AddAsync(order);
-        await _unitOfWork.CompleteAsync();
+        using var transaction = await _unitOfWork.BeginTransactionAsync();
 
         try
         {
-            return await _paymentService.CreateCheckoutSession(order, domain);
-        }
-        catch (Exception)
-        {
-            auction.Quantity += 1;
-            if (auction.AuctionStatus == AuctionStatus.Sold) auction.AuctionStatus = AuctionStatus.Active;
-            
-            _unitOfWork.Orders.Remove(order); 
+            var auction = await _unitOfWork.Auctions.GetByIdAsync(model.AuctionId);
+            if (auction == null || auction.Quantity <= 0) 
+                throw new StockUnavailableException($"Aukcja o ID {model.AuctionId} jest niedostępna.");
 
+            var userProfile = await _profileService.GetByUserIdAsync(userId);
+
+            if (model.WantsInvoice && userProfile?.CompanyProfile == null)
+                throw new CompanyDataMissingException("Brak danych firmy do faktury.");
+
+            var order = new Order
+            {
+                AuctionId = auction.Id,
+                BuyerId = userId,
+                TotalPrice = auction.Price,
+                OrderDate = DateTime.Now,
+                Status = OrderStatus.Pending,
+                IsCompanyPurchase = model.WantsInvoice
+            };
+
+            if (model.WantsInvoice && userProfile?.CompanyProfile != null)
+            {
+                var cp = userProfile.CompanyProfile;
+                order.BuyerCompanyName = cp.CompanyName;
+                order.BuyerNIP = cp.NIP;
+                order.BuyerInvoiceAddress = $"{cp.InvoiceAddress.Street}, {cp.InvoiceAddress.PostalCode} {cp.InvoiceAddress.City}";
+            }
+
+            auction.Quantity -= 1;
+            if (auction.Quantity == 0) auction.AuctionStatus = AuctionStatus.Sold;
+
+            await _unitOfWork.Orders.AddAsync(order);
             await _unitOfWork.CompleteAsync();
-            throw;
+
+            var sessionUrl = await _paymentService.CreateCheckoutSession(order, domain);
+
+            await transaction.CommitAsync();
+
+            return sessionUrl;
+
+        }
+        catch (Exception ex) when (ex is not StockUnavailableException && ex is not CompanyDataMissingException)
+        {
+            await transaction.RollbackAsync();
+            throw new PaymentProcessingException("Błąd przygotowywania transakcji bazy danych lub bramki.", ex);
         }
     }
 

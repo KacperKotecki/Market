@@ -8,4 +8,6 @@ public interface IAuctionProcessingService
     Task<List<AuctionImage>> ProcessUploadedImagesWebpAsync(List<IFormFile> photos);
     
     Task<List<MyAuctionViewModel>> GetUserAuctionsViewModelAsync(string userId);
+
+    Task<AuctionDetailsViewModel?> GetAuctionDetailsViewModelAsync(int id);
 }

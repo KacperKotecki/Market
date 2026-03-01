@@ -6,5 +6,7 @@ public interface IUnitOfWork
     IOrderRepository Orders { get; }
     IProfileRepository Profiles { get; }
 
+    Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync();
+
     Task CompleteAsync();
 }

@@ -62,8 +62,8 @@ public class AuctionsController : Controller
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-        var auction = await _auctionService.GetByIdAsync(id.Value);
-        return auction == null ? NotFound() : View(auction);
+        var auctionViewModel = await _auctionProcessingService.GetAuctionDetailsViewModelAsync(id.Value);
+        return auctionViewModel == null ? NotFound() : View(auctionViewModel);
     }
 
     [Seller]

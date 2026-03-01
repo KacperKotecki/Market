@@ -1,3 +1,6 @@
+import { generateDescription } from './api/aiClient.js';
+import { initSwiper } from './ui/galleryManager.js';
+
 document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('photosInput');
     const galleryContainer = document.getElementById('galleryContainer');
@@ -5,28 +8,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const thumbWrapper = document.getElementById('thumbSwiperWrapper');
     const btnGenerate = document.getElementById('aiButton');
     
-    function initSwiper() {
-        new Swiper(".mySwiper", {
-            spaceBetween: 10,
-            slidesPerView: 6,
-            freeMode: true,
-            watchSlidesProgress: true,
-            breakpoints: {
-                0: { slidesPerView: 3 },
-                576: { slidesPerView: 4 },
-                992: { slidesPerView: 6 }
-            }
-        });
-        
-        const swiperThumbs = document.querySelector(".mySwiper").swiper;
-
-        new Swiper(".mySwiper2", {
-            spaceBetween: 10,
-            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
-            thumbs: { swiper: swiperThumbs }
-        });
-    }
-
     if (fileInput) {
         fileInput.addEventListener('change', function () {
             mainWrapper.innerHTML = '';
@@ -47,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 reader.onload = function (e) {
                     mainWrapper.innerHTML += `<div class="swiper-slide"><img src="${e.target.result}" /></div>`;
                     thumbWrapper.innerHTML += `<div class="swiper-slide border border-secondary"><img src="${e.target.result}" style="object-fit: contain;" /></div>`;
-                    
                     loadedCount++;
                     if(loadedCount === files.length) {
                         setTimeout(initSwiper, 100);
@@ -83,32 +63,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             try {
-                const response = await fetch('/Auctions/GenerateDescription', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error || "Wystąpił błąd serwera");
-                }
-
-                const data = await response.json();
-
-                if (data.title && data.title.startsWith("ERROR:")) {
-                        throw new Error(data.title.replace("ERROR:", "").trim());
-                }
+                const data = await generateDescription(formData);
 
                 if (data.title) document.getElementById("Title").value = data.title;
                 if (data.description) document.getElementById("Description").value = data.description;
                 if (data.suggestedPrice) document.getElementById("Price").value = data.suggestedPrice;
-                generatedByAiValue.value = "true";
+                if (document.getElementById("generatedByAiValue")) {
+                    document.getElementById("generatedByAiValue").value = "true";
+                }
 
                 if (data.category) {
                     const categorySelect = document.getElementById("Category");
-                    let options = Array.from(categorySelect.options);
-                    let optionToSelect = options.find(item => item.text.includes(data.category) || item.value === data.category);
-                    if (optionToSelect) categorySelect.value = optionToSelect.value;
+                    if (categorySelect) {
+                        let options = Array.from(categorySelect.options);
+                        let optionToSelect = options.find(item => item.text.includes(data.category) || item.value === data.category);
+                        if (optionToSelect) categorySelect.value = optionToSelect.value;
+                    }
                 }
 
             } catch (error) {
@@ -121,6 +91,4 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-
-   
 });

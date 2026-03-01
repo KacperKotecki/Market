@@ -5,6 +5,7 @@ using Market.Web.Services;
 using Market.Web.Core.Models;
 using Market.Web.Repositories;
 using Market.Web.Core.ViewModels;
+using Market.Web.Core.Exceptions;
 using NUnit.Framework.Internal;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 
@@ -16,6 +17,7 @@ public class OrderServiceTests
     private Mock<IUnitOfWork> _unitOfWorkMock;
     private Mock<IProfileService> _profileServiceMock;
     private Mock<IPaymentService> _paymentServiceMock; 
+    private Mock<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> _transactionMock;
     
     private OrderService _orderService;
 
@@ -26,6 +28,9 @@ public class OrderServiceTests
         _profileServiceMock = new Mock<IProfileService>();
         _paymentServiceMock = new Mock<IPaymentService>();
 
+        _transactionMock = new Mock<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>(); 
+        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync()).ReturnsAsync(_transactionMock.Object); 
+        
         var auctionRepoMock = new Mock<IAuctionRepository>(); 
         _unitOfWorkMock.Setup(u => u.Auctions).Returns(auctionRepoMock.Object);
 
@@ -184,6 +189,7 @@ public class OrderServiceTests
         )), Times.Once);
 
         _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once); // SaveChanges
+        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -208,10 +214,11 @@ public class OrderServiceTests
         // Assert
         auction.Quantity.Should().Be(0);
         auction.AuctionStatus.Should().Be(AuctionStatus.Sold);
+        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
-    public async Task PlaceOrderAsync_ShouldThrowInvalidOperationException_WhenAuctionIsSoldOut()
+    public async Task PlaceOrderAsync_ShouldThrowStockUnavailableException_WhenAuctionIsSoldOut()
     {
         var id = 1;
         var buyerId = "buyerId";
@@ -225,12 +232,13 @@ public class OrderServiceTests
 
         Func<Task> action = async() => await _orderService.PlaceOrderAsync(model, buyerId, "domain");
 
-        await action.Should().ThrowAsync<InvalidOperationException>();
+        await action.Should().ThrowAsync<StockUnavailableException>();
         _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
-    public async Task PlaceOrderAsync_ShouldThrowArgumentException_WhenWantsInvoiceIsTrueButUserHasNoCompany()
+    public async Task PlaceOrderAsync_ShouldThrowCompanyDataMissingException_WhenWantsInvoiceIsTrueButUserHasNoCompany()
     {
         var id = 1;
         var buyerId = "buyerId";
@@ -249,14 +257,14 @@ public class OrderServiceTests
 
         Func<Task> action= async() => await _orderService.PlaceOrderAsync(model, buyerId, "domain");
 
-        await action.Should().ThrowAsync<ArgumentException>();
+        await action.Should().ThrowAsync<CompanyDataMissingException>();
 
         _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
-
+        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
-    public async Task PlaceOrderAsync_ShouldRollbackQuantityAndStatus_WhenPaymentServiceThrowsException()
+    public async Task PlaceOrderAsync_ShouldRollbackTransaction_WhenPaymentServiceThrowsException()
     {
         var id = 1;
         var buyerId = "buyerId";
@@ -278,12 +286,10 @@ public class OrderServiceTests
                            .ThrowsAsync(new Exception("Payment error"));
         Func<Task> action = async () => await _orderService.PlaceOrderAsync(model, buyerId, "domain");
 
-        await action.Should().ThrowAsync<Exception>().WithMessage("Payment error");
+        await action.Should().ThrowAsync<Exception>();
 
-        auction.Quantity.Should().Be(1);
-        auction.AuctionStatus.Should().Be(AuctionStatus.Active);
-        _unitOfWorkMock.Verify(u => u.Orders.Remove(It.IsAny<Order>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Exactly(2));
+        _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.Orders.Remove(It.IsAny<Order>()), Times.Never);
     }
     #endregion
 

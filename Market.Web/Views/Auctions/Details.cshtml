@@ -1,7 +1,7 @@
-@model Market.Web.Core.Models.Auction
+@model Market.Web.Core.ViewModels.AuctionDetailsViewModel
 
 @{
-    ViewData["Title"] = "Szczegóły Aukcji";
+    ViewData["Title"] = @Model.Title ?? "Szczegóły Aukcji";
     var mainInfoImage = Model.Images != null && Model.Images.Any() 
                     ? Model.Images.First().ImagePath 
                     : "https://via.placeholder.com/600";
@@ -88,7 +88,7 @@
                         <ul class="list-unstyled d-flex flex-column gap-3">
                             <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2">
                                 <span class="text-secondary"><i class="bi bi-person-circle text-primary me-2"></i>Sprzedawca</span>
-                                <span class="fw-medium">@(Model.User?.UserName ?? "Nieznany")</span>
+                                <span class="fw-medium">@Model.SellerName</span>
                             </li>
                             <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2">
                                 <span class="text-secondary"><i class="bi bi-calendar-event text-info me-2"></i>Dodano</span>
