@@ -2,29 +2,33 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Market.Web.Core.DTOs;
+using Market.Web.Core.Exceptions;
+using Market.Web.Core.Options;
+using Microsoft.Extensions.Options;
 
 namespace Market.Web.Services;
 
 public class OpenRouterAiService : IADescriptionService
 {
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-
+    private readonly ILogger<OpenRouterAiService> _logger;
     private readonly string _openruterModel;
 
-    public OpenRouterAiService(HttpClient httpClient, IConfiguration configuration)
+    public OpenRouterAiService(
+        HttpClient httpClient, 
+        IOptions<OpenRouterOptions> options,
+        ILogger<OpenRouterAiService> logger)
     {
         _httpClient = httpClient;
-        _configuration = configuration;
+        _logger = logger;
         
-        var apiKey = _configuration["OpenRouter:ApiKey"];
-        _openruterModel = _configuration["OpenRouter:Model"];
+        var config = options.Value;
+        _openruterModel = config.Model;
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.ApiKey);
         
-        // OpenRouter wymaga referera i tytułu strony dla statystyk
-        _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", "https://localhost:7000"); 
-        _httpClient.DefaultRequestHeaders.Add("X-Title", "MarketApp");
+        _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", config.Referer); 
+        _httpClient.DefaultRequestHeaders.Add("X-Title", config.AppTitle);
     }
 
     public async Task<AuctionDraftDto> GenerateFromImagesAsync(List<IFormFile> images)
@@ -50,10 +54,18 @@ public class OpenRouterAiService : IADescriptionService
         }
 
         string promptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Prompts", "system_prompt.txt");
-        string systemPrompt = await File.ReadAllTextAsync(promptPath);
-        if(!File.Exists(promptPath) || string.IsNullOrEmpty(systemPrompt))
+        
+        if (!File.Exists(promptPath))
         {
-            throw new Exception("Nie można znaleźć lub odczytać pliku z promptem systemowym.");
+            _logger.LogError("System prompt file not found at path: {PromptPath}", promptPath);
+            throw new AiGenerationException("Nie można znaleźć lub odczytać pliku z promptem systemowym.");
+        }
+
+        string systemPrompt = await File.ReadAllTextAsync(promptPath);
+        if (string.IsNullOrEmpty(systemPrompt))
+        {
+            _logger.LogError("System prompt file is empty at path: {PromptPath}", promptPath);
+            throw new AiGenerationException("Nie można znaleźć lub odczytać pliku z promptem systemowym.");
         }
 
         var messages = new List<object>
@@ -84,34 +96,35 @@ public class OpenRouterAiService : IADescriptionService
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception($"OpenRouter API Error: {response.StatusCode} - {responseString}");
+            _logger.LogError("OpenRouter API Error: {StatusCode} - {ResponseString}", response.StatusCode, responseString);
+            throw new AiGenerationException($"OpenRouter API Error: {response.StatusCode}");
         }
 
-        // 4. Wyciąganie danych z zagnieżdżonej struktury OpenAI
-        // Struktura: { "choices": [ { "message": { "content": "{ TU_JEST_NASZ_JSON }" } } ] }
-        using var doc = JsonDocument.Parse(responseString);
-        var contentString = doc.RootElement
-                         .GetProperty("choices")[0]
-                         .GetProperty("message")
-                         .GetProperty("content")
-                         .GetString();
-
-        if (string.IsNullOrEmpty(contentString))
+        try
         {
-             throw new Exception("AI zwróciło pustą odpowiedź.");
-        }
+            // 4. Wyciąganie danych z zagnieżdżonej struktury OpenAI
+            using var doc = JsonDocument.Parse(responseString);
+            var contentString = doc.RootElement
+                             .GetProperty("choices")[0]
+                             .GetProperty("message")
+                             .GetProperty("content")
+                             .GetString();
 
-        // 5. Deserializacja właściwego JSONa z danymi aukcji
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        try 
-        {
+            if (string.IsNullOrEmpty(contentString))
+            {
+                 _logger.LogError("AI returned an empty content string.");
+                 throw new AiGenerationException("AI zwróciło pustą odpowiedź.");
+            }
+
+            // 5. Deserializacja właściwego JSONa z danymi aukcji
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var draft = JsonSerializer.Deserialize<AuctionDraftDto>(contentString, options);
             return draft ?? new AuctionDraftDto();
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            // Fallback: czasami AI doda ```json na początku mimo zakazu, warto to obsłużyć lub po prostu rzucić błąd
-            throw new Exception("Błąd parsowania JSON z AI. Treść: " + contentString);
+            _logger.LogError(ex, "Failed to parse AI response JSON. Raw response: {ResponseString}", responseString);
+            throw new AiGenerationException("Błąd parsowania JSON z AI.", ex);
         }
     }
 }

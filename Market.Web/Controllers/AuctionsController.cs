@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Market.Web.Core.Models;
 using Market.Web.Services;
 using Market.Web.Authorization;
+using Market.Web.Core.Exceptions;
 
 namespace Market.Web.Controllers;
 
@@ -15,6 +16,7 @@ public class AuctionsController : Controller
     private readonly IADescriptionService _aiDescriptionService;
     private readonly IAuctionProcessingService _auctionProcessingService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<AuctionsController> _logger;
 
 
     public AuctionsController(
@@ -22,13 +24,15 @@ public class AuctionsController : Controller
         IProfileService profileService,
         IADescriptionService aiDescriptionService,
         IAuctionProcessingService auctionProcessingService,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        ILogger<AuctionsController> logger)
     {
         _auctionService = auctionService;
         _profileService = profileService;
         _aiDescriptionService = aiDescriptionService;
         _auctionProcessingService = auctionProcessingService;
         _userManager = userManager;
+        _logger = logger;
     }
 
     [AllowAnonymous]
@@ -158,8 +162,9 @@ public class AuctionsController : Controller
         {
             return Json(await _aiDescriptionService.GenerateFromImagesAsync(photos));
         }
-        catch (Exception ex)
+        catch (AiGenerationException ex)
         {
+            _logger.LogWarning(ex, "AI description generation failed");
             return StatusCode(500, new { error = "Błąd AI: " + ex.Message });
         }
     }

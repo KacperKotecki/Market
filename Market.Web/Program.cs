@@ -6,10 +6,17 @@ using Market.Web.Repositories;
 using Market.Web.Services;
 using Market.Web.Services.Payments;
 using Market.Web.Persistence;
+using Market.Web.Core.Options;
+using Polly;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOptions<OpenRouterOptions>()
+    .BindConfiguration(OpenRouterOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
@@ -30,7 +37,17 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();  
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
+
+builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>()
+    .AddTransientHttpErrorPolicy(policy =>
+        policy.WaitAndRetryAsync(
+            retryCount: 2,
+            sleepDurationProvider: attempt => TimeSpan.FromSeconds(attempt * 2)))
+    .AddTransientHttpErrorPolicy(policy =>
+        policy.CircuitBreakerAsync(
+            handledEventsAllowedBeforeBreaking: 3,
+            durationOfBreak: TimeSpan.FromSeconds(30)));
+
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
 builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 
