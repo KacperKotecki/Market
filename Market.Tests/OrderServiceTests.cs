@@ -331,7 +331,7 @@ public class OrderServiceTests
         Func<Task> action = async() => await _orderService.UpdateOrderStatusAsync(order.Id, OrderStatus.Paid, otherUserId);
 
         // Assert
-        await action.Should().ThrowAsync<UnauthorizedAccessException>(); 
+        await action.Should().ThrowAsync<OrderAuthorizationException>(); 
         _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
     }
     #endregion
@@ -382,7 +382,7 @@ public class OrderServiceTests
 
         Func<Task> action = async() => await _orderService.ConfirmDeliveryAsync(order.Id, otherId);
 
-        await action.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("Brak uprawnień do zamówienia.");
+        await action.Should().ThrowAsync<OrderAuthorizationException>().WithMessage("Brak uprawnień do zamówienia.");
     }
 
 
@@ -402,7 +402,7 @@ public class OrderServiceTests
         // Act & Assert
         Func<Task> action = async () => await _orderService.ConfirmDeliveryAsync(orderId, buyerId);
         
-        await action.Should().ThrowAsync<InvalidOperationException>()
+        await action.Should().ThrowAsync<InvalidOrderStateException>()
             .WithMessage("*tylko wysłane*"); 
     }
     #endregion
@@ -467,7 +467,7 @@ public class OrderServiceTests
 
         Func<Task> action = async() => await _orderService.AddOpinionAsync(model, otherUserId);
 
-        await action.Should().ThrowAsync<UnauthorizedAccessException>();
+        await action.Should().ThrowAsync<OrderAuthorizationException>();
 
         _unitOfWorkMock.Verify(u => u.Orders.AddOpinionAsync(It.IsAny<Opinion>()), Times.Never);
         _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
@@ -509,7 +509,7 @@ public class OrderServiceTests
 
         Func<Task> action = async() => await _orderService.AddOpinionAsync(model, buyerId);
 
-        await action.Should().ThrowAsync<InvalidOperationException>().WithMessage("Już oceniono.");
+        await action.Should().ThrowAsync<OpinionAlreadyExistsException>().WithMessage("Już oceniono.");
 
         _unitOfWorkMock.Verify(u => u.Orders.AddOpinionAsync(It.IsAny<Opinion>()), Times.Never);
         _unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);

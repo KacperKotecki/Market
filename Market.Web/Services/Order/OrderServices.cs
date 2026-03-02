@@ -148,9 +148,10 @@ public class OrderService : IOrderService
             await _unitOfWork.Orders.AddAsync(order);
             await _unitOfWork.CompleteAsync();
 
+            await transaction.CommitAsync();
+
             var sessionUrl = await _paymentService.CreateCheckoutSession(order, domain);
 
-            await transaction.CommitAsync();
 
             return sessionUrl;
 
@@ -166,7 +167,7 @@ public class OrderService : IOrderService
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
         if (order == null || order.Auction == null || order.Auction.UserId != sellerId) 
-            throw new UnauthorizedAccessException("Brak uprawnień do zamówienia.");
+            throw new OrderAuthorizationException("Brak uprawnień do zamówienia.");
 
         order.Status = newStatus;
         await _unitOfWork.CompleteAsync();
@@ -176,10 +177,10 @@ public class OrderService : IOrderService
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
         if (order == null || order.BuyerId != buyerId)
-            throw new UnauthorizedAccessException("Brak uprawnień do zamówienia.");
+            throw new OrderAuthorizationException("Brak uprawnień do zamówienia.");
 
         if (order.Status != OrderStatus.Shipped)
-             throw new InvalidOperationException("Można potwierdzić tylko wysłane zamówienia.");
+            throw new InvalidOrderStateException("Można potwierdzić tylko wysłane zamówienia.");
 
         order.Status = OrderStatus.Completed;
 
@@ -194,8 +195,8 @@ public class OrderService : IOrderService
     public async Task AddOpinionAsync(RateOrderViewModel model, string buyerId)
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(model.OrderId);
-        if (order == null || order.BuyerId != buyerId) throw new UnauthorizedAccessException();
-        if (order.Opinion != null) throw new InvalidOperationException("Już oceniono.");
+        if (order == null || order.BuyerId != buyerId) throw new OrderAuthorizationException();
+        if (order.Opinion != null) throw new OpinionAlreadyExistsException("Już oceniono.");
 
         var opinion = new Opinion
         {

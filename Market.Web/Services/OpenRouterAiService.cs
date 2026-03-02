@@ -116,9 +116,12 @@ public class OpenRouterAiService : IADescriptionService
                  throw new AiGenerationException("AI zwróciło pustą odpowiedź.");
             }
 
-            // 5. Deserializacja właściwego JSONa z danymi aukcji
+            // 5. Sanitize potential Markdown code-block wrappers (e.g. ```json ... ```) before parsing
+            var sanitizedContent = SanitizeJsonResponse(contentString);
+
+            // 6. Deserializacja właściwego JSONa z danymi aukcji
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var draft = JsonSerializer.Deserialize<AuctionDraftDto>(contentString, options);
+            var draft = JsonSerializer.Deserialize<AuctionDraftDto>(sanitizedContent, options);
             return draft ?? new AuctionDraftDto();
         }
         catch (JsonException ex)
@@ -126,5 +129,28 @@ public class OpenRouterAiService : IADescriptionService
             _logger.LogError(ex, "Failed to parse AI response JSON. Raw response: {ResponseString}", responseString);
             throw new AiGenerationException("Błąd parsowania JSON z AI.", ex);
         }
+    }
+
+    /// <summary>
+    /// Strips Markdown code-block fences that LLMs sometimes wrap around JSON output.
+    /// Handles both ```json ... ``` and ``` ... ``` variants.
+    /// </summary>
+    private static string SanitizeJsonResponse(string raw)
+    {
+        var trimmed = raw.Trim();
+
+        // Remove opening fence: ```json or ```
+        if (trimmed.StartsWith("```", StringComparison.Ordinal))
+        {
+            var firstNewline = trimmed.IndexOf('\n');
+            if (firstNewline != -1)
+                trimmed = trimmed[(firstNewline + 1)..];
+        }
+
+        // Remove closing fence: ```
+        if (trimmed.EndsWith("```", StringComparison.Ordinal))
+            trimmed = trimmed[..^3];
+
+        return trimmed.Trim();
     }
 }
