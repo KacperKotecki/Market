@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Market.Web.Core.Models;
 using Market.Web.Services;
+using Market.Web.Services.AI;
 using Market.Web.Authorization;
 using Market.Web.Core.Exceptions;
 

@@ -1,7 +1,7 @@
 using Market.Web.Core.DTOs;
 
 
-namespace Market.Web.Services;
+namespace Market.Web.Services.AI;
 
 public interface IADescriptionService
 {

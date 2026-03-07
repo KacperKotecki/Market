@@ -4,7 +4,7 @@ using FluentAssertions;
 using Market.Web.Core.DTOs;
 using Market.Web.Core.Exceptions;
 using Market.Web.Core.Options;
-using Market.Web.Services;
+using Market.Web.Services.AI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,6 +21,7 @@ public class AiServiceTests
     private HttpClient _httpClient;
     private Mock<IOptions<OpenRouterOptions>> _optionsMock;
     private Mock<ILogger<OpenRouterAiService>> _loggerMock;
+    private Mock<IPromptProvider> _promptProviderMock;
     private OpenRouterOptions _options;
 
     [SetUp]
@@ -45,9 +46,11 @@ public class AiServiceTests
 
         _loggerMock = new Mock<ILogger<OpenRouterAiService>>();
 
-        string promptDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Prompts");
-        Directory.CreateDirectory(promptDir);
-        File.WriteAllText(Path.Combine(promptDir, "system_prompt.txt"), "Test prompt");
+
+        _promptProviderMock = new Mock<IPromptProvider>();
+        _promptProviderMock
+            .Setup(p => p.GetSystemPromptAsync())
+            .ReturnsAsync("Test prompt");
     }
 
     [TearDown]
@@ -57,7 +60,7 @@ public class AiServiceTests
     }
 
     private OpenRouterAiService CreateService() => 
-        new OpenRouterAiService(_httpClient, _optionsMock.Object, _loggerMock.Object);
+        new OpenRouterAiService(_httpClient, _optionsMock.Object, _loggerMock.Object, _promptProviderMock.Object);
 
     private List<IFormFile> CreateDummyFile()
     {
@@ -137,5 +140,41 @@ public class AiServiceTests
 
         // Assert
         action.Should().ThrowAsync<AiGenerationException>().WithMessage("*Błąd parsowania JSON z AI*");
+    }
+
+    [Test]
+    public void GenerateFromImagesAsync_ShouldThrowAiGenerationException_WhenHttpRequestExceptionIsThrown()
+    {
+        // Arrange
+        var service = CreateService();
+        var files = CreateDummyFile();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Network failure"));
+
+        // Act
+        Func<Task> action = async () => await service.GenerateFromImagesAsync(files);
+
+        // Assert
+        action.Should().ThrowAsync<AiGenerationException>().WithMessage("*Usługa AI jest tymczasowo niedostępna*");
+    }
+
+    [Test]
+    public void GenerateFromImagesAsync_ShouldThrowAiGenerationException_WhenRequestTimesOut()
+    {
+        // Arrange
+        var service = CreateService();
+        var files = CreateDummyFile();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TaskCanceledException("Request timed out"));
+
+        // Act
+        Func<Task> action = async () => await service.GenerateFromImagesAsync(files);
+
+        // Assert
+        action.Should().ThrowAsync<AiGenerationException>().WithMessage("*Przekroczono czas oczekiwania*");
     }
 }

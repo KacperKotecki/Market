@@ -6,7 +6,7 @@ using Market.Web.Core.Exceptions;
 using Market.Web.Core.Options;
 using Microsoft.Extensions.Options;
 
-namespace Market.Web.Services;
+namespace Market.Web.Services.AI;
 
 public class OpenRouterAiService : IADescriptionService
 {
@@ -14,14 +14,18 @@ public class OpenRouterAiService : IADescriptionService
     private readonly ILogger<OpenRouterAiService> _logger;
     private readonly string _openruterModel;
 
+    private readonly IPromptProvider _promptProvider;
+
     public OpenRouterAiService(
         HttpClient httpClient, 
         IOptions<OpenRouterOptions> options,
-        ILogger<OpenRouterAiService> logger)
+        ILogger<OpenRouterAiService> logger,
+        IPromptProvider promptProvider)
     {
         _httpClient = httpClient;
         _logger = logger;
-        
+        _promptProvider = promptProvider;
+
         var config = options.Value;
         _openruterModel = config.Model;
 
@@ -53,20 +57,7 @@ public class OpenRouterAiService : IADescriptionService
             }
         }
 
-        string promptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Prompts", "system_prompt.txt");
-        
-        if (!File.Exists(promptPath))
-        {
-            _logger.LogError("System prompt file not found at path: {PromptPath}", promptPath);
-            throw new AiGenerationException("Nie można znaleźć lub odczytać pliku z promptem systemowym.");
-        }
-
-        string systemPrompt = await File.ReadAllTextAsync(promptPath);
-        if (string.IsNullOrEmpty(systemPrompt))
-        {
-            _logger.LogError("System prompt file is empty at path: {PromptPath}", promptPath);
-            throw new AiGenerationException("Nie można znaleźć lub odczytać pliku z promptem systemowym.");
-        }
+        string systemPrompt = await _promptProvider.GetSystemPromptAsync();
 
         var messages = new List<object>
         {
@@ -90,9 +81,24 @@ public class OpenRouterAiService : IADescriptionService
         };
 
         var jsonContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync("https://openrouter.ai/api/v1/chat/completions", jsonContent);
-        
-        var responseString = await response.Content.ReadAsStringAsync();
+
+        HttpResponseMessage response;
+        string responseString;
+        try
+        {
+            response = await _httpClient.PostAsync("https://openrouter.ai/api/v1/chat/completions", jsonContent);
+            responseString = await response.Content.ReadAsStringAsync();
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError(httpEx, "AI service HTTP call failed after retries.");
+            throw new AiGenerationException("Usługa AI jest tymczasowo niedostępna. Spróbuj ponownie.", httpEx);
+        }
+        catch (TaskCanceledException timeoutEx)
+        {
+            _logger.LogError(timeoutEx, "AI service request timed out.");
+            throw new AiGenerationException("Przekroczono czas oczekiwania na odpowiedź AI.", timeoutEx);
+        }
 
         if (!response.IsSuccessStatusCode)
         {

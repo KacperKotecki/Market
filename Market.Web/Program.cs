@@ -8,6 +8,7 @@ using Market.Web.Services.Payments;
 using Market.Web.Persistence;
 using Market.Web.Core.Options;
 using Polly;
+using Market.Web.Services.AI;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();  
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPromptProvider, PromptProvider>();
 
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>()
     .AddTransientHttpErrorPolicy(policy =>
