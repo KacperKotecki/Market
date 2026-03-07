@@ -31,4 +31,7 @@ public class UserProfile
     public virtual ApplicationUser? User { get; set; }
 
     public virtual CompanyProfile? CompanyProfile { get; set; }
+
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
 }

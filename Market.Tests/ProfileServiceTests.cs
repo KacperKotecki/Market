@@ -1,8 +1,10 @@
 using FluentAssertions;
+using Market.Web.Core.Exceptions;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Repositories;
 using Market.Web.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using Moq;
 using NUnit.Framework.Internal;
@@ -282,5 +284,23 @@ public class ProfilServiceTests
         results.Message.Should().Be("Brak środków do wypłaty.");
         results.Amount.Should().Be(0);
     }
+    [Test]
+    public async Task WithdrawFundsAsync_ShouldThrowConcurrencyException_WhenDbUpdateConcurrencyExceptionOccurs()
+    {
+        var userId = "userId";
+        var userProfile = TestDataFactory.CreateUserProfile(userId);
+        userProfile.WalletBalance = 100;
+        userProfile.PrivateIBAN = "PL00000000000000000000000000";
+
+        _unitOfWorkMock.Setup(u => u.Profiles.GetByUserIdAsync(userId)).ReturnsAsync(userProfile);
+        _unitOfWorkMock.Setup(u => u.CompleteAsync())
+            .ThrowsAsync(new DbUpdateConcurrencyException());
+
+        Func<Task> act = async () => await _profileService.WithdrawFundsAsync(userId);
+
+        await act.Should().ThrowAsync<ConcurrencyException>();
+        userProfile.WalletBalance.Should().Be(100);
+    }
+
     #endregion
 }

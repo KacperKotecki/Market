@@ -116,6 +116,7 @@ public class AuctionsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Seller]
     public async Task<IActionResult> Edit(int id, Auction auction) 
     {
         if (ModelState.IsValid)

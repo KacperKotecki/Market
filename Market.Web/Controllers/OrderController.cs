@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Market.Web.Core.Exceptions;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Services;
+using Market.Web.Core.DTOs;
 
 namespace Market.Web.Controllers;
 
@@ -12,13 +14,16 @@ public class OrderController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IOrderService _orderService;
+    private readonly ILogger<OrderController> _logger;
 
     public OrderController(
-        UserManager<ApplicationUser> userManager, 
-        IOrderService orderService) 
+        UserManager<ApplicationUser> userManager,
+        IOrderService orderService,
+        ILogger<OrderController> logger)
     {
         _userManager = userManager;
         _orderService = orderService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -72,6 +77,16 @@ public class OrderController : Controller
             var checkoutUrl = await _orderService.PlaceOrderAsync(model, user.Id, domain);
             return Redirect(checkoutUrl);
         }
+        catch (StockUnavailableException ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
+        }
+        catch (ConcurrencyException ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
+        }
         catch (ArgumentException ex) 
         {
             ModelState.AddModelError("", ex.Message);
@@ -79,8 +94,10 @@ public class OrderController : Controller
         }
         catch (Exception ex) 
         {
-            TempData["Error"] = "Wystąpił błąd: " + ex.Message;
-             return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
+            _logger.LogError(ex, "Unexpected error placing order for AuctionId {AuctionId}, UserId {UserId}",
+                model.AuctionId, user.Id);
+            TempData["Error"] = "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
+            return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
         }
     }
 
@@ -96,8 +113,13 @@ public class OrderController : Controller
             await _orderService.UpdateOrderStatusAsync(orderId, newStatus, user.Id);
             TempData["SuccessMessage"] = $"Zmieniono status na {newStatus}.";
         }
-        catch (UnauthorizedAccessException) { return Forbid(); }
-        catch (Exception ex) { TempData["Error"] = ex.Message; }
+        catch (OrderAuthorizationException) { return Forbid(); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error updating order status OrderId {OrderId}, UserId {UserId}",
+                orderId, user.Id);
+            TempData["Error"] = "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
+        }
 
         return RedirectToAction(nameof(MySales));
     }
@@ -114,7 +136,16 @@ public class OrderController : Controller
             await _orderService.ConfirmDeliveryAsync(orderId, user.Id);
             TempData["SuccessMessage"] = "Transakcja zakończona pomyślnie.";
         }
-        catch (Exception ex) { TempData["Error"] = ex.Message; }
+        catch (ConcurrencyException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error confirming delivery OrderId {OrderId}, UserId {UserId}",
+                orderId, user.Id);
+            TempData["Error"] = "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
+        }
 
         return RedirectToAction(nameof(MyOrders));
     }
@@ -146,9 +177,21 @@ public class OrderController : Controller
             TempData["SuccessMessage"] = "Opinię dodano pomyślnie.";
             return RedirectToAction(nameof(MyOrders));
         }
-        catch (Exception ex)
+        catch (OrderAuthorizationException ex)
         {
             TempData["Error"] = ex.Message;
+            return RedirectToAction(nameof(MyOrders));
+        }
+        catch (OpinionAlreadyExistsException ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction(nameof(MyOrders));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error rating order {OrderId}, UserId {UserId}",
+                model.OrderId, user.Id);
+            TempData["Error"] = "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
             return RedirectToAction(nameof(MyOrders));
         }
     }
@@ -156,9 +199,20 @@ public class OrderController : Controller
     [HttpGet]
     public async Task<IActionResult> PaymentSuccess(int orderId, string session_id)
     {
-        var order = await _orderService.GetOrderByIdAsync(orderId);
-        if (order == null) return NotFound();
-        return View("OrderConfirmation", order.Id);
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+        
+
+        try
+        {
+            var orderDetailDto = await _orderService.GetOrderByIdAsync(orderId, user.Id);
+            if (orderDetailDto == null) return NotFound();
+            return View("OrderConfirmation", orderDetailDto);
+        }
+        catch (OrderAuthorizationException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet]
@@ -168,10 +222,23 @@ public class OrderController : Controller
         return RedirectToAction(nameof(MyOrders));
     }
 
-    public IActionResult OrderConfirmation(int id)
+    public async Task<IActionResult> OrderConfirmation(int id)
     {
-        return View(id);
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Challenge();
+
+        try
+        {
+            var orderDetailDto = await _orderService.GetOrderByIdAsync(id, user.Id);
+            if (orderDetailDto == null) return NotFound();
+            return View(orderDetailDto);
+        }
+        catch (OrderAuthorizationException)
+        {
+            return Forbid();
+        }
     }
 
     private async Task<ApplicationUser> GetCurrentUserAsync() => await _userManager.GetUserAsync(User);
+
 }

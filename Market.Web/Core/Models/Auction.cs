@@ -41,4 +41,7 @@ public class Auction
     public ICollection<AuctionImage> Images { get; set; } = new List<AuctionImage>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
 }

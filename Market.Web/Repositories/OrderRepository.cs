@@ -36,6 +36,7 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders
             .Include(o => o.Auction)
             .Include(o => o.Buyer)
+                .ThenInclude(b => b.UserProfile)
             .Where(o => o.Auction.UserId == sellerId)
             .OrderByDescending(o => o.OrderDate)
             .ToListAsync();

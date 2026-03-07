@@ -1,6 +1,8 @@
+using Market.Web.Core.Exceptions;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Market.Web.Services;
 
@@ -121,9 +123,17 @@ public class ProfileService : IProfileService
 
         decimal amountToWithdraw = userProfile.WalletBalance;
         userProfile.WalletBalance = 0;
-        
-        await _unitOfWork.CompleteAsync();
 
-        return (true, "Wypłacono", amountToWithdraw);
+        try
+        {
+            await _unitOfWork.CompleteAsync();
+            return (true, "Wypłacono", amountToWithdraw);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new ConcurrencyException(
+                "Operacja nie powiodła się z powodu konfliktu. Spróbuj ponownie.", ex);
+        
+        }
     }
 }

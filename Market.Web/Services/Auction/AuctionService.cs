@@ -30,7 +30,7 @@ public class AuctionService : IAuctionService
 
         if (auction.CreatedAt == default) auction.CreatedAt = DateTime.Now;
 
-        auction.AuctionStatus = AuctionStatus.Active; 
+        auction.AuctionStatus = AuctionStatus.Active;
 
         await _unitOfWork.Auctions.AddAsync(auction);
         await _unitOfWork.CompleteAsync();
@@ -38,7 +38,18 @@ public class AuctionService : IAuctionService
 
     public async Task UpdateAuctionAsync(Auction auction)
     {
-        await _unitOfWork.Auctions.UpdateAsync(auction);
+        var auctionInDb = await _unitOfWork.Auctions.GetByIdAsync(auction.Id);
+        if (auctionInDb == null) return;
+
+        auctionInDb.Title = auction.Title;
+        auctionInDb.Description = auction.Description;
+        auctionInDb.Price = auction.Price;
+        auctionInDb.Quantity = auction.Quantity;
+        auctionInDb.Category = auction.Category;
+        auctionInDb.EndDate = auction.EndDate;
+        auctionInDb.IsCompanySale = auction.IsCompanySale;
+        auctionInDb.GeneratedByAi = auction.GeneratedByAi;
+
         await _unitOfWork.CompleteAsync();
     }
 

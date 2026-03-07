@@ -23,7 +23,7 @@ public static class TestDataFactory
     public static UserProfile CreateUserProfile(
         string userId = "userId", 
         int id = 1,
-        Address shippingAddress = null
+        Address? shippingAddress = null
     )
     {
         return new UserProfile

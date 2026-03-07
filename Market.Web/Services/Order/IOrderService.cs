@@ -1,3 +1,4 @@
+using Market.Web.Core.DTOs;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 
@@ -8,7 +9,7 @@ public interface IOrderService
     Task<CheckoutViewModel?> GetCheckoutModelAsync(int auctionId, string userId);
     Task<List<MyOrderViewModel>> GetBuyerOrdersAsync(string userId);
     Task<List<MySaleViewModel>> GetSellerSalesAsync(string userId);
-    Task<Order?> GetOrderByIdAsync(int orderId);
+    Task<OrderDetailDto?> GetOrderByIdAsync(int orderId, string userId);
     Task<RateOrderViewModel?> GetRateOrderModelAsync(int orderId, string userId);
 
 

@@ -1,8 +1,10 @@
+using Market.Web.Core.DTOs;
+using Market.Web.Core.Exceptions;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Repositories;
 using Market.Web.Services.Payments;
-using Market.Web.Core.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Market.Web.Services;
 
@@ -91,9 +93,24 @@ public class OrderService : IOrderService
         }).ToList();
     }
 
-    public async Task<Order?> GetOrderByIdAsync(int orderId)
+    public async Task<OrderDetailDto?> GetOrderByIdAsync(int orderId, string userId)
     {
-        return await _unitOfWork.Orders.GetByIdAsync(orderId);
+        var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
+
+        if (order == null) return null;
+
+        if (order.BuyerId != userId)
+            throw new OrderAuthorizationException("Brak dostępu do tego zamówienia.");
+
+        return new OrderDetailDto
+        {
+            Id = order.Id,
+            Title = order.Auction?.Title ?? "Brak tytułu",
+            Price = order.Auction?.Price ?? 0,
+            Quantity = order.Auction?.Quantity ?? 1,
+            TotalPrice = order.TotalPrice,
+            Status = order.Status
+        };
     }
     
     public async Task<RateOrderViewModel?> GetRateOrderModelAsync(int orderId, string userId)
@@ -146,7 +163,17 @@ public class OrderService : IOrderService
             if (auction.Quantity == 0) auction.AuctionStatus = AuctionStatus.Sold;
 
             await _unitOfWork.Orders.AddAsync(order);
-            await _unitOfWork.CompleteAsync();
+
+            try
+            {
+                await _unitOfWork.CompleteAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                throw new StockUnavailableException(
+                    "Przepraszamy, ten produkt został zakupiony sekundy wcześniej. Odśwież stronę.", ex);
+            }
 
             await transaction.CommitAsync();
 
@@ -189,7 +216,15 @@ public class OrderService : IOrderService
             order.Auction.User.UserProfile.WalletBalance += order.TotalPrice;
         }
 
-        await _unitOfWork.CompleteAsync();
+        try
+        {
+            await _unitOfWork.CompleteAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new ConcurrencyException(
+                "Operacja finansowa nie powiodła się z powodu konfliktu. Spróbuj ponownie.", ex);
+        }
     }
 
     public async Task AddOpinionAsync(RateOrderViewModel model, string buyerId)

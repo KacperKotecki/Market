@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Market.Web.Core.Exceptions;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Services;
@@ -79,16 +80,23 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var result = await _profileService.WithdrawFundsAsync(user.Id);
+            try
+            {
+                var result = await _profileService.WithdrawFundsAsync(user.Id);
 
-            if (!result.Success)
-            {
-                TempData["Error"] = result.Message;
+                if (!result.Success)
+                {
+                    TempData["Error"] = result.Message;
+                }
+                else
+                {
+                    var userProfile = await _profileService.GetByUserIdAsync(user.Id);
+                    TempData["SuccessMessage"] = $"Zlecono wypłatę {result.Amount:N2} PLN na konto {userProfile?.PrivateIBAN}.";
+                }
             }
-            else
+            catch (ConcurrencyException ex)
             {
-                var userProfile = await _profileService.GetByUserIdAsync(user.Id);
-                TempData["SuccessMessage"] = $"Zlecono wypłatę {result.Amount:N2} PLN na konto {userProfile?.PrivateIBAN}.";
+                TempData["Error"] = ex.Message;
             }
 
             return RedirectToAction(nameof(MyFinances));

@@ -1,12 +1,13 @@
-@model int
+@using Market.Web.Core.DTOs
+@model OrderDetailDto
 @{ ViewData["Title"] = "Sukces"; }
 
 <div class="container mt-5 text-center">
     <div class="py-5">
         <i class="bi bi-check-circle-fill text-success display-1 mb-4"></i>
         <h1 class="fw-bold mb-3">Dziękujemy za zakup!</h1>
-        <p class="lead text-muted mb-4">Twoje zamówienie <strong>#@Model</strong> zostało przyjęte.</p>
-        
+        <p class="lead text-muted mb-4">Twoje zamówienie <strong>#@Model.Id</strong> zostało przyjęte.</p>
+        <p class="mb-4">Zakupiony przedmiot: <strong>@Model.Title</strong><br />Cena: <strong>@Model.Price.ToString() PLN</strong><br />Ilość: <strong>@Model.Quantity</strong><br />Łączna kwota: <strong>@Model.TotalPrice.ToString() PLN</strong></p>
         <a asp-controller="Auctions" asp-action="Index" class="btn btn-primary px-5 py-2">Wróć do strony głównej</a>
     </div>
 </div>
