@@ -1,40 +1,35 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Market.Web.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
+using Market.Web.Services;
 using System.Security.Claims;
 
-namespace Market.Web.Authorization
-{
-    public class BuyerFilter : IAsyncAuthorizationFilter
-    {
-        private readonly ApplicationDbContext _context;
+namespace Market.Web.Authorization;
 
-        public BuyerFilter(ApplicationDbContext context)
+public class BuyerFilter : IAsyncAuthorizationFilter
+{
+    private readonly IProfileService _profileService;
+
+    public BuyerFilter(IProfileService profileService)
+    {
+        _profileService = profileService;
+    }
+
+    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
+    {
+        var user = context.HttpContext.User;
+
+        if (user.Identity?.IsAuthenticated != true)
         {
-            _context = context;
+            return;
         }
 
-        public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        bool isProfileComplete = await _profileService.HasCompleteBasicProfileReadOnlyAsync(userId!);
+
+        if (!isProfileComplete)
         {
-            var user = context.HttpContext.User;
-
-            if (!user.Identity.IsAuthenticated)
-            {
-                return;
-            }
-
-            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            var isProfileComplete = await _context.UserProfiles
-                .AnyAsync(x => x.UserId == userId 
-                               && !string.IsNullOrEmpty(x.FirstName) 
-                               && !string.IsNullOrEmpty(x.LastName));
-
-            if (!isProfileComplete)
-            {
-                context.Result = new RedirectToActionResult("EditProfile", "Profile", null);
-            }
+            context.Result = new RedirectToActionResult("EditProfile", "Profile", null);
         }
     }
 }

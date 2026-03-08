@@ -20,6 +20,15 @@ public class ProfileService : IProfileService
         return await _unitOfWork.Profiles.GetByUserIdAsync(userId);
     }
 
+    public async Task<bool> HasCompleteBasicProfileReadOnlyAsync(string userId)
+    {
+        return await _unitOfWork.Profiles.HasCompleteBasicProfileReadOnlyAsync(userId);
+    }
+
+    public async Task<bool> HasIbanInProfileReadOnlyAsync(string userId)
+    {
+        return await _unitOfWork.Profiles.HasIbanInProfileReadOnlyAsync(userId);
+    }
     public async Task<EditProfileViewModel> GetEditProfileViewModelAsync(string userId, string email)
     {
         var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(userId);

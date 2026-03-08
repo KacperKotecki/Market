@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Market.Web.Authorization
+namespace Market.Web.Authorization;
+
+public class SellerAttribute : TypeFilterAttribute
 {
-    public class SellerAttribute : TypeFilterAttribute
+    public SellerAttribute() : base(typeof(SellerFilter))
     {
-        public SellerAttribute() : base(typeof(SellerFilter))
-        {
-        }
     }
 }

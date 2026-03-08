@@ -20,6 +20,30 @@ public class ProfileRepository : IProfileRepository
             .FirstOrDefaultAsync(p => p.UserId == userId);
     }
 
+    public async Task<bool> HasCompleteBasicProfileReadOnlyAsync(string userId)
+    {
+        return await _context.UserProfiles
+            .AsNoTracking()
+            .AnyAsync(x => x.UserId == userId
+                           && !string.IsNullOrEmpty(x.FirstName)
+                           && !string.IsNullOrEmpty(x.LastName)
+                           && !string.IsNullOrEmpty(x.ShippingAddress.Street)
+                           && !string.IsNullOrEmpty(x.ShippingAddress.City)
+                           && !string.IsNullOrEmpty(x.ShippingAddress.PostalCode)
+                           && !string.IsNullOrEmpty(x.ShippingAddress.Country));
+    }
+
+    public async Task<bool> HasIbanInProfileReadOnlyAsync(string userId)
+    {
+
+
+        return await _context.UserProfiles
+            .AsNoTracking()
+            .AnyAsync(x => x.UserId == userId
+               && (!string.IsNullOrEmpty(x.PrivateIBAN)
+                   || (x.CompanyProfile != null 
+                       && !string.IsNullOrEmpty(x.CompanyProfile.CompanyIBAN))));
+    }
     public async Task AddAsync(UserProfile profile)
     {
         await _context.UserProfiles.AddAsync(profile);
