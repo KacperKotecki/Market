@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Market.Web.Core.Models;
 
 namespace Market.Web.Core.ViewModels;
@@ -19,5 +18,5 @@ public class AuctionDetailsViewModel
     public AuctionStatus AuctionStatus { get; set; }
     public string SellerName { get; set; } = string.Empty;
     public string SellerId { get; set; } = string.Empty;
-    public List<AuctionImage> Images { get; set; } = new List<AuctionImage>();
+    public List<string> ImagePaths { get; set; } = [];
 }

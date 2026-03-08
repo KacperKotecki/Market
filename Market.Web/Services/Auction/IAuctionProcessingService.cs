@@ -10,4 +10,5 @@ public interface IAuctionProcessingService
     Task<List<MyAuctionViewModel>> GetUserAuctionsViewModelAsync(string userId);
 
     Task<AuctionDetailsViewModel?> GetAuctionDetailsViewModelAsync(int id);
+    Task<AuctionFormViewModel?> GetAuctionFormViewModelAsync(int id);
 }

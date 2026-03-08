@@ -151,7 +151,28 @@ public class AuctionProcessingService : IAuctionProcessingService
             AuctionStatus = auction.AuctionStatus,
             SellerName = auction.User?.UserName ?? "Nieznany",
             SellerId = auction.UserId ?? string.Empty,
-            Images = auction.Images != null ? auction.Images.ToList() : new List<AuctionImage>()
+            ImagePaths = auction.Images?.Select(i => i.ImagePath).ToList() ?? []
+        };
+    }
+
+    public async Task<AuctionFormViewModel?> GetAuctionFormViewModelAsync(int id)
+    {
+        var auction = await _unitOfWork.Auctions.GetByIdAsync(id);
+        if (auction == null) return null;
+
+        return new AuctionFormViewModel
+        {
+            Id            = auction.Id,
+            Title         = auction.Title,
+            Description   = auction.Description,
+            Price         = auction.Price,
+            Quantity      = auction.Quantity,
+            Category      = auction.Category,
+            EndDate       = auction.EndDate,
+            IsCompanySale = auction.IsCompanySale,
+            GeneratedByAi = auction.GeneratedByAi,
+            ImagePaths    = auction.Images?.Select(i => i.ImagePath).ToList() ?? [],
+            SellerId      = auction.UserId ?? string.Empty
         };
     }
 }

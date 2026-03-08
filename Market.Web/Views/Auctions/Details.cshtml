@@ -2,8 +2,8 @@
 
 @{
     ViewData["Title"] = @Model.Title ?? "Szczegóły Aukcji";
-    var mainInfoImage = Model.Images != null && Model.Images.Any() 
-                    ? Model.Images.First().ImagePath 
+    var mainInfoImage = Model.ImagePaths.Count > 0
+                    ? Model.ImagePaths.First()
                     : "https://via.placeholder.com/600";
 }
 <link rel="stylesheet" href="~/css/auctions-form.css" asp-append-version="true" />
@@ -17,14 +17,14 @@
         <div class="row g-0">
             
             <div class="col-md-6 p-2">
-                @if (Model.Images != null && Model.Images.Any())
+                @if (Model.ImagePaths.Count > 0)
                 {
                     <div style="--swiper-navigation-color: #fff; --swiper-pagination-color: #fff" class="swiper mySwiper2 rounded border border-secondary mb-2">
                         <div class="swiper-wrapper">
-                            @foreach (var img in Model.Images)
+                            @foreach (var path in Model.ImagePaths)
                             {
                                 <div class="swiper-slide">
-                                    <img src="@img.ImagePath" alt="@Model.Title" />
+                                    <img src="@path" alt="@Model.Title" />
                                 </div>
                             }
                         </div>
@@ -34,10 +34,10 @@
 
                     <div thumbsSlider="" class="swiper mySwiper">
                         <div class="swiper-wrapper">
-                            @foreach (var img in Model.Images)
+                            @foreach (var path in Model.ImagePaths)
                             {
                                 <div class="swiper-slide border border-secondary">
-                                    <img src="@img.ImagePath" style="object-fit: cover;" alt="thumb" />
+                                    <img src="@path" style="object-fit: cover;" alt="thumb" />
                                 </div>
                             }
                         </div>

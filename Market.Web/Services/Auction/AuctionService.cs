@@ -1,4 +1,7 @@
+using Market.Web.Core.DTOs;
+using Market.Web.Core.Exceptions;
 using Market.Web.Core.Models;
+using Market.Web.Core.ViewModels;
 using Market.Web.Repositories;
 
 namespace Market.Web.Services;
@@ -18,37 +21,88 @@ public class AuctionService : IAuctionService
     {
         return await _unitOfWork.Auctions.GetAllAsync();
     }
+
+    public async Task<AuctionListViewModel> GetAllWithFiltersAsync(AuctionFilter filter)
+    {
+        var (items, totalCount) = await _unitOfWork.Auctions.GetAllWithFiltersAsync(filter);
+
+        int totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+        var dtos = items.Select(a => new AuctionSummaryDto
+        {
+            Id             = a.Id,
+            Title          = a.Title,
+            Description    = a.Description,
+            Price          = a.Price,
+            Category       = a.Category,
+            AuctionStatus  = a.AuctionStatus,
+            EndDate        = a.EndDate,
+            CreatedAt      = a.CreatedAt,
+            Quantity       = a.Quantity,
+            GeneratedByAi  = a.GeneratedByAi,
+            ThumbnailPath  = a.Images?.FirstOrDefault()?.ImagePath,
+            SellerUserName = a.User?.UserName ?? string.Empty,
+            SellerId       = a.UserId ?? string.Empty,
+            IsCompanySale  = a.IsCompanySale,
+        }).ToList();
+
+        return new AuctionListViewModel
+        {
+            Auctions     = dtos,
+            SearchString = filter.SearchString,
+            Category     = filter.Category,
+            MinPrice     = filter.MinPrice,
+            MaxPrice     = filter.MaxPrice,
+            SortOrder    = filter.SortOrder,
+            CurrentPage  = filter.PageNumber,
+            TotalPages   = totalPages,
+        };
+    }
     
     public async Task<Auction?> GetByIdAsync(int id)
     {
         return await _unitOfWork.Auctions.GetByIdAsync(id);
     }
 
-    public async Task CreateAuctionAsync(Auction auction, List<IFormFile> photos)
+    public async Task CreateAuctionAsync(AuctionFormViewModel vm, string userId, List<IFormFile> photos)
     {
+        var auction = new Auction
+        {
+            Title         = vm.Title,
+            Description   = vm.Description,
+            Price         = vm.Price,
+            Quantity      = vm.Quantity,
+            Category      = vm.Category,
+            EndDate       = vm.EndDate,
+            IsCompanySale = vm.IsCompanySale,
+            GeneratedByAi = vm.GeneratedByAi,
+            UserId        = userId,
+            CreatedAt     = DateTime.Now,
+            AuctionStatus = AuctionStatus.Active,
+        };
+
         auction.Images = await _processingService.ProcessUploadedImagesWebpAsync(photos);
-
-        if (auction.CreatedAt == default) auction.CreatedAt = DateTime.Now;
-
-        auction.AuctionStatus = AuctionStatus.Active;
 
         await _unitOfWork.Auctions.AddAsync(auction);
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task UpdateAuctionAsync(Auction auction)
+    public async Task UpdateAuctionAsync(AuctionFormViewModel vm, string requestingUserId)
     {
-        var auctionInDb = await _unitOfWork.Auctions.GetByIdAsync(auction.Id);
+        var auctionInDb = await _unitOfWork.Auctions.GetByIdAsync(vm.Id);
         if (auctionInDb == null) return;
 
-        auctionInDb.Title = auction.Title;
-        auctionInDb.Description = auction.Description;
-        auctionInDb.Price = auction.Price;
-        auctionInDb.Quantity = auction.Quantity;
-        auctionInDb.Category = auction.Category;
-        auctionInDb.EndDate = auction.EndDate;
-        auctionInDb.IsCompanySale = auction.IsCompanySale;
-        auctionInDb.GeneratedByAi = auction.GeneratedByAi;
+        if (auctionInDb.UserId != requestingUserId)
+            throw new OrderAuthorizationException("Brak uprawnień do edycji tej aukcji.");
+
+        auctionInDb.Title         = vm.Title;
+        auctionInDb.Description   = vm.Description;
+        auctionInDb.Price         = vm.Price;
+        auctionInDb.Quantity      = vm.Quantity;
+        auctionInDb.Category      = vm.Category;
+        auctionInDb.EndDate       = vm.EndDate;
+        auctionInDb.IsCompanySale = vm.IsCompanySale;
+        auctionInDb.GeneratedByAi = vm.GeneratedByAi;
 
         await _unitOfWork.CompleteAsync();
     }

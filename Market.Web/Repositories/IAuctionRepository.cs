@@ -1,3 +1,4 @@
+using Market.Web.Core.DTOs;
 using Market.Web.Core.Models;
 
 namespace Market.Web.Repositories;
@@ -5,6 +6,7 @@ namespace Market.Web.Repositories;
 public interface IAuctionRepository
 {
     Task<List<Auction>> GetAllAsync();
+    Task<(List<Auction> Items, int TotalCount)> GetAllWithFiltersAsync(AuctionFilter filter);
     
     Task<List<Auction>> GetUserAuctionsAsync(string userId); 
     Task<Auction?> GetByIdAsync(int id);

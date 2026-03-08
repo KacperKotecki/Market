@@ -128,12 +128,15 @@
                                                 <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm fw-bold">
                                                     <i class="bi bi-pencil-square me-1"></i> Edytuj
                                                 </a>
-                                                <!-- Dodajemy przycisk zakończenia -->
-                                                <a asp-action="SoftDelete" asp-route-id="@item.Id" 
-                                                   class="btn btn-outline-danger btn-sm"
-                                                   onclick="return confirm('Czy na pewno chcesz zakończyć sprzedaż?');">
-                                                    <i class="bi bi-stop-circle me-1"></i> Zakończ
-                                                </a>
+                                                <!-- Zakończ sprzedaż — POST, nie GET link -->
+                                                <form asp-action="SoftDelete" asp-route-id="@item.Id" method="post"
+                                                      onsubmit="return confirm('Czy na pewno chcesz zakończyć sprzedaż?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                                        <i class="bi bi-stop-circle me-1"></i> Zakończ
+                                                    </button>
+                                                </form>
                                             }
                                             else
                                             {

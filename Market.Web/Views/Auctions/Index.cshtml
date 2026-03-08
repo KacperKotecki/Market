@@ -1,4 +1,4 @@
-@model IEnumerable<Market.Web.Core.Models.Auction>
+@model Market.Web.Core.ViewModels.AuctionListViewModel
 @using System.Security.Claims 
 
 @{
@@ -20,7 +20,9 @@
         <!-- Wyszukiwarka -->
         <div class="col-md-12">
             <div class="input-group">
-                <input type="text" name="searchString" class="form-control" placeholder="Szukaj po tytule lub opisie..." />
+                <input type="text" name="searchString" class="form-control"
+                       placeholder="Szukaj po tytule lub opisie..."
+                       value="@Model.SearchString" />
                 <button type="submit" class="btn btn-primary">Szukaj</button>
             </div>
         </div>
@@ -29,14 +31,14 @@
         <div class="col-md-3">
             <label class="form-label fw-bold">Kategoria</label>
             <select name="category" class="form-select">
-                <option value="">-- Wszystkie --</option>
-                <option value="Elektronika">Elektronika</option>
-                <option value="Moda">Moda</option>
-                <option value="Dom i Ogród">Dom i Ogród</option>
-                <option value="Sport i Hobby">Sport i Hobby</option>
-                <option value="Motoryzacja">Motoryzacja</option>
-                <option value="Kultura i Rozrywka">Kultura i Rozrywka</option>
-                <option value="Inne">Inne</option>
+                <option value="" selected="@(Model.Category == null)">-- Wszystkie --</option>
+                <option value="Elektronika" selected="@(Model.Category == "Elektronika")">Elektronika</option>
+                <option value="Moda" selected="@(Model.Category == "Moda")">Moda</option>
+                <option value="Dom i Ogród" selected="@(Model.Category == "Dom i Ogród")">Dom i Ogród</option>
+                <option value="Sport i Hobby" selected="@(Model.Category == "Sport i Hobby")">Sport i Hobby</option>
+                <option value="Motoryzacja" selected="@(Model.Category == "Motoryzacja")">Motoryzacja</option>
+                <option value="Kultura i Rozrywka" selected="@(Model.Category == "Kultura i Rozrywka")">Kultura i Rozrywka</option>
+                <option value="Inne" selected="@(Model.Category == "Inne")">Inne</option>
             </select>
         </div>
 
@@ -44,9 +46,13 @@
         <div class="col-md-5">
             <label class="form-label fw-bold">Cena (PLN)</label>
             <div class="input-group">
-                <input type="number" name="minPrice" class="form-control" placeholder="Od" step="0.01" />
+                <input type="number" name="minPrice" class="form-control"
+                       placeholder="Od" step="0.01"
+                       value="@Model.MinPrice" />
                 <span class="input-group-text">-</span>
-                <input type="number" name="maxPrice" class="form-control" placeholder="Do" step="0.01" />
+                <input type="number" name="maxPrice" class="form-control"
+                       placeholder="Do" step="0.01"
+                       value="@Model.MaxPrice" />
             </div>
         </div>
 
@@ -68,14 +74,13 @@
 
 
 <div class="d-flex flex-column gap-3">
-    @foreach (var item in Model) {
+    @foreach (var item in Model.Auctions) {
         <div class="card auction-row-card rounded-3 overflow-hidden position-relative">
             <div class="row g-0 h-100">
                 
                 @{
-                    var indexImage = item.Images != null && item.Images.Any() 
-                                    ? item.Images.First().ImagePath 
-                                    : "https://via.placeholder.com/300x220?text=Brak+Zdjecia";
+                    var indexImage = item.ThumbnailPath
+                                    ?? "https://via.placeholder.com/300x220?text=Brak+Zdjecia";
                 }
 
                 <!-- 1. LEWA STRONA: ZDJĘCIE (col-md-3 lub 4 w zależności od preferencji) -->
@@ -141,13 +146,13 @@
                             <!-- Info o sprzedawcy i dacie -->
                             <div class="mt-auto text-md-end text-secondary small">
                                 <div class="mb-1">
-                                    <i class="bi bi-person me-1"></i> @(item.User?.UserName ?? "użytkownik")
+                                    <i class="bi bi-person me-1"></i> @(item.SellerUserName)
                                 </div>
                                 <div>
                                     <i class="bi bi-calendar3 me-1"></i> Dodano: @item.CreatedAt.ToString("dd.MM.yyyy")
                                 </div>
                                 <!-- Przycisk Edycji (Dla właściciela) -->
-                                @if (currentUserId != null && item.UserId == currentUserId)
+                                @if (currentUserId != null && item.SellerId == currentUserId)
                                 {
                                     <a asp-action="Edit" asp-route-id="@item.Id" 
                                    class="btn btn-outline-secondary btn-sm mt-2 position-relative"

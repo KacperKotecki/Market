@@ -1,4 +1,4 @@
-@model Market.Web.Core.Models.Auction
+@model Market.Web.Core.ViewModels.AuctionFormViewModel
 @{ ViewData["Title"] = "Edytuj Aukcję"; }
 
 <link rel="stylesheet" href="~/css/auctions-form.css" asp-append-version="true" />
@@ -19,20 +19,17 @@
         <input type="hidden" asp-for="Id" />
 
         <!-- GALERIA SWIPER (Z widocznym kontenerem jeśli są zdjęcia) -->
-        <div id="galleryContainer" class="@(Model.Images != null && Model.Images.Any() ? "" : "d-none") mb-4">
+        <div id="galleryContainer" class="@(Model.ImagePaths.Count > 0 ? "" : "d-none") mb-4">
             
             <!-- GŁÓWNY SLIDER -->
             <div style="--swiper-navigation-color: #fff; --swiper-pagination-color: #fff" class="swiper mySwiper2 rounded border border-secondary mb-2">
                 <div class="swiper-wrapper" id="mainSwiperWrapper">
                     <!-- PĘTLA GENERUJĄCA ZDJĘCIA Z BAZY -->
-                    @if (Model.Images != null)
+                    @foreach (var path in Model.ImagePaths)
                     {
-                        foreach (var img in Model.Images)
-                        {
-                            <div class="swiper-slide">
-                                <img src="@img.ImagePath" />
-                            </div>
-                        }
+                        <div class="swiper-slide">
+                            <img src="@path" />
+                        </div>
                     }
                 </div>
                 <div class="swiper-button-next"></div>
@@ -42,14 +39,11 @@
             <!-- MINIATURY -->
             <div thumbsSlider="" class="swiper mySwiper">
                 <div class="swiper-wrapper" id="thumbSwiperWrapper">
-                     @if (Model.Images != null)
+                    @foreach (var path in Model.ImagePaths)
                     {
-                        foreach (var img in Model.Images)
-                        {
-                            <div class="swiper-slide border border-secondary">
-                                <img src="@img.ImagePath" style="object-fit: contain;" />
-                            </div>
-                        }
+                        <div class="swiper-slide border border-secondary">
+                            <img src="@path" style="object-fit: contain;" />
+                        </div>
                     }
                 </div>
             </div>
