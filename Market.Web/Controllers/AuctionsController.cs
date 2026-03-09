@@ -8,6 +8,7 @@ using Market.Web.Services;
 using Market.Web.Services.AI;
 using Market.Web.Authorization;
 using Market.Web.Core.Exceptions;
+using Market.Web.Core.Helpers;
 
 namespace Market.Web.Controllers;
 
@@ -65,7 +66,7 @@ public class AuctionsController : Controller
 
         ViewBag.CanSellAsCompany = hasCompanyProfile;
 
-        return View(new AuctionFormViewModel { EndDate = DateTime.Now.AddDays(30) });
+        return View(new AuctionFormViewModel { EndDate = DateTime.UtcNow.AddDays(30).ToPolandTime() });
     }
 
     [Seller]
@@ -76,13 +77,17 @@ public class AuctionsController : Controller
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        if (vm.EndDate <= DateTime.Now)
-            ModelState.AddModelError("EndDate", "Data zakończenia musi być w przyszłości.");
-
         if (ModelState.IsValid)
         {
-            await _auctionService.CreateAuctionAsync(vm, user.Id, photos);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _auctionService.CreateAuctionAsync(vm, user.Id, photos);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (AuctionException ex)
+            {
+                ModelState.AddModelError(ex.PropertyName ?? "EndDate", ex.Message);
+            }
         }
         return View(vm);
     }
@@ -116,6 +121,10 @@ public class AuctionsController : Controller
             {
                 await _auctionService.UpdateAuctionAsync(vm, user.Id);
                 return RedirectToAction(nameof(MyAuctions));
+            }
+            catch (AuctionException ex)
+            {
+                ModelState.AddModelError(ex.PropertyName ?? "EndDate", ex.Message);
             }
             catch (OrderAuthorizationException)
             {

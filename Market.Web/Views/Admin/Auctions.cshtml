@@ -107,7 +107,7 @@
                                         @auction.Category
                                     </span>
                                     <span class="small opacity-50" title="Data utworzenia">
-                                        <i class="bi bi-calendar-plus me-1"></i>@auction.CreatedAt.ToShortDateString()
+                                        <i class="bi bi-calendar-plus me-1"></i>@auction.CreatedAt.ToPolandTime().ToShortDateString()
                                     </span>
                                      <a asp-controller="Auctions" asp-action="Details" asp-route-id="@auction.Id" 
                                        class="btn btn-outline-secondary btn-sm rounded-pill px-3 ms-auto">
@@ -146,7 +146,7 @@
                                         <i class="bi bi-box-seam me-2 w-25"></i>Ilość: <strong>@auction.Quantity</strong>
                                     </div>
                                     <div class="@(auction.IsExpired ? "text-danger fw-bold" : "")">
-                                        <i class="bi bi-hourglass-split me-2 w-25"></i>Do: @auction.EndDate.ToShortDateString()
+                                        <i class="bi bi-hourglass-split me-2 w-25"></i>Do: @auction.EndDate.ToPolandTime().ToShortDateString()
                                     </div>
                                 </div>
                             </div>

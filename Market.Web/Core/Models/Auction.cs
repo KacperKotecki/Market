@@ -25,7 +25,7 @@ public class Auction
     [Required(ErrorMessage = "Kategoria jest wymagana.")]
     public string Category { get; set; } = string.Empty;
     
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime EndDate { get; set; }
 
     [Display(Name = "Sprzedaż jako firma (Faktura VAT / Paragon)")]

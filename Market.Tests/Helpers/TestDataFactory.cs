@@ -63,8 +63,8 @@ public static class TestDataFactory
             User = actualUser, 
 
             Category = "General",
-            CreatedAt = DateTime.Now,
-            EndDate = DateTime.Now.AddDays(7),
+            CreatedAt = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(7),
             Images = new List<AuctionImage>()
         };
     }
@@ -91,7 +91,7 @@ public static class TestDataFactory
 
             TotalPrice = actualAuction.Price, 
             Status = OrderStatus.Pending,
-            OrderDate = DateTime.Now,
+            OrderDate = DateTime.UtcNow,
             
             AuctionId = actualAuction.Id,
             Auction = actualAuction, 

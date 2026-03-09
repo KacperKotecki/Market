@@ -57,7 +57,7 @@ public class OrderServiceTests
         var userId = "user1";
         
         var auction = TestDataFactory.CreateAuction(id: auctionId, userId: "seller1");
-        auction.EndDate = DateTime.Now.AddDays(10);
+        auction.EndDate = DateTime.UtcNow.AddDays(10);
         auction.Quantity = 1;
 
         var userProfile = TestDataFactory.CreateUserProfile(userId: userId);
@@ -117,7 +117,7 @@ public class OrderServiceTests
         var id = 1;
         var buyerId = "buyerID";
         var auction = TestDataFactory.CreateAuction(id);
-        auction.EndDate = DateTime.Now.AddDays(-1);
+        auction.EndDate = DateTime.UtcNow.AddDays(-1);
 
         _unitOfWorkMock.Setup(u => u.Auctions.GetByIdAsync(id)).ReturnsAsync(auction);
 
@@ -488,7 +488,7 @@ public class OrderServiceTests
             SellerId = sellerId,
             Comment = "Comment",
             Rating = 5,
-            CreatedAt = DateTime.Today
+            CreatedAt = DateTime.UtcNow.Date
         };
 
   

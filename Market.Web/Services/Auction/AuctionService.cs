@@ -1,5 +1,6 @@
 using Market.Web.Core.DTOs;
 using Market.Web.Core.Exceptions;
+using Market.Web.Core.Helpers;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Repositories;
@@ -66,6 +67,13 @@ public class AuctionService : IAuctionService
 
     public async Task CreateAuctionAsync(AuctionFormViewModel vm, string userId, List<IFormFile> photos)
     {
+        var endDateUtc = vm.EndDate.ToUtcFromPolandTime(); // throws AuctionException on DST gap
+
+        if (endDateUtc <= DateTime.UtcNow)
+            throw new AuctionException(
+                "Data zakończenia musi być w przyszłości.",
+                nameof(vm.EndDate));
+
         var auction = new Auction
         {
             Title         = vm.Title,
@@ -73,11 +81,11 @@ public class AuctionService : IAuctionService
             Price         = vm.Price,
             Quantity      = vm.Quantity,
             Category      = vm.Category,
-            EndDate       = vm.EndDate,
+            EndDate       = endDateUtc,
             IsCompanySale = vm.IsCompanySale,
             GeneratedByAi = vm.GeneratedByAi,
             UserId        = userId,
-            CreatedAt     = DateTime.Now,
+            CreatedAt     = DateTime.UtcNow,
             AuctionStatus = AuctionStatus.Active,
         };
 
@@ -95,12 +103,19 @@ public class AuctionService : IAuctionService
         if (auctionInDb.UserId != requestingUserId)
             throw new OrderAuthorizationException("Brak uprawnień do edycji tej aukcji.");
 
+        var endDateUtc = vm.EndDate.ToUtcFromPolandTime(); // throws AuctionException on DST gap
+
+        if (endDateUtc <= DateTime.UtcNow)
+            throw new AuctionException(
+                "Data zakończenia musi być w przyszłości.",
+                nameof(vm.EndDate));
+
         auctionInDb.Title         = vm.Title;
         auctionInDb.Description   = vm.Description;
         auctionInDb.Price         = vm.Price;
         auctionInDb.Quantity      = vm.Quantity;
         auctionInDb.Category      = vm.Category;
-        auctionInDb.EndDate       = vm.EndDate;
+        auctionInDb.EndDate       = endDateUtc;
         auctionInDb.IsCompanySale = vm.IsCompanySale;
         auctionInDb.GeneratedByAi = vm.GeneratedByAi;
 

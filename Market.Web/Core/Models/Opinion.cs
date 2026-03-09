@@ -14,7 +14,7 @@ namespace Market.Web.Core.Models
         [StringLength(1000, ErrorMessage = "Opinia nie może być dłuższa niż 1000 znaków.")]
         public string Comment { get; set; } = string.Empty;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public int OrderId { get; set; }
         

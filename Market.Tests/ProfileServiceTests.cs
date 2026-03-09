@@ -189,7 +189,7 @@ public class ProfilServiceTests
         auction.Title = "Title-example";
 
         var order = TestDataFactory.CreateOrder(1, auction);
-        order.OrderDate = DateTime.Today;
+        order.OrderDate = DateTime.UtcNow.Date;
         order.TotalPrice = 111;
         order.Status = OrderStatus.Completed;
         order.Buyer.UserName = "BuyerName";
@@ -201,7 +201,7 @@ public class ProfilServiceTests
         var results = await _profileService.GetFinancesViewModelAsync(userId);
 
         results.Transactions[0].OrderId.Should().Be(1);
-        results.Transactions[0].Date.Should().Be(DateTime.Today); 
+        results.Transactions[0].Date.Should().Be(DateTime.UtcNow.Date); 
         results.Transactions[0].Title.Should().Be("Title-example"); 
         results.Transactions[0].Amount.Should().Be(111); 
         results.Transactions[0].Status.Should().Be(OrderStatus.Completed);

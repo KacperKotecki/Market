@@ -8,7 +8,7 @@ namespace Market.Web.Core.Models
         [Key]
         public int Id { get; set; }
 
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

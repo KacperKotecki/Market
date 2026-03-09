@@ -1,5 +1,6 @@
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
+using Market.Web.Core.Helpers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Webp;
@@ -77,7 +78,7 @@ public class AuctionProcessingService : IAuctionProcessingService
                     BuyerName = o.Opinion!.Buyer != null ? o.Opinion.Buyer.UserName : "Anonim",
                     Rating = o.Opinion.Rating,
                     Comment = o.Opinion.Comment,
-                    DateFormatted = o.Opinion.CreatedAt.ToString("dd.MM.yyyy")
+                    DateFormatted = o.Opinion.CreatedAt.ToPolandTime().ToString("dd.MM.yyyy")
                 })
                 .ToList();
 
@@ -92,8 +93,8 @@ public class AuctionProcessingService : IAuctionProcessingService
                 IsCompanySale = a.IsCompanySale,
                 GeneratedByAi = a.GeneratedByAi,
                 
-                CreatedAtFormatted = a.CreatedAt.ToShortDateString(),
-                EndDateFormatted = a.EndDate.ToShortDateString(),
+                CreatedAtFormatted = a.CreatedAt.ToPolandTime().ToShortDateString(),
+                EndDateFormatted = a.EndDate.ToPolandTime().ToShortDateString(),
                 AuctionStatus = a.AuctionStatus, 
 
                 IsBannedOrSuspended = a.AuctionStatus == AuctionStatus.Banned || a.AuctionStatus == AuctionStatus.Suspended,
@@ -168,7 +169,7 @@ public class AuctionProcessingService : IAuctionProcessingService
             Price         = auction.Price,
             Quantity      = auction.Quantity,
             Category      = auction.Category,
-            EndDate       = auction.EndDate,
+            EndDate       = auction.EndDate.ToPolandTime(),
             IsCompanySale = auction.IsCompanySale,
             GeneratedByAi = auction.GeneratedByAi,
             ImagePaths    = auction.Images?.Select(i => i.ImagePath).ToList() ?? [],

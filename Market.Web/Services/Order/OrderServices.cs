@@ -27,7 +27,7 @@ public class OrderService : IOrderService
     {
         var auction = await _unitOfWork.Auctions.GetByIdAsync(auctionId);
 
-        if (auction == null || auction.Quantity <= 0 || auction.EndDate <= DateTime.Now) return null;
+        if (auction == null || auction.Quantity <= 0 || auction.EndDate <= DateTime.UtcNow) return null;
         if (auction.UserId == userId) return null;
 
         var userProfile = await _profileService.GetByUserIdAsync(userId);
@@ -146,7 +146,7 @@ public class OrderService : IOrderService
                 AuctionId = auction.Id,
                 BuyerId = userId,
                 TotalPrice = auction.Price,
-                OrderDate = DateTime.Now,
+                OrderDate = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
                 IsCompanyPurchase = model.WantsInvoice
             };
@@ -240,7 +240,7 @@ public class OrderService : IOrderService
             SellerId = order.Auction!.UserId,
             Comment = model.Comment,
             Rating = model.Rating,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
 
         await _unitOfWork.Orders.AddOpinionAsync(opinion);

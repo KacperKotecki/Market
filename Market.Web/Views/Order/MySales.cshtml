@@ -33,7 +33,7 @@
                             <!-- KOLUMNA 1: INFO O ZAMÓWIENIU -->
                             <td class="ps-4">
                                 <span class="fw-bold d-block">#@item.OrderId</span>
-                                <small class="text-muted">@item.OrderDate.ToString("dd.MM.yyyy HH:mm")</small>
+                                <small class="text-muted">@item.OrderDate.ToPolandTime().ToString("dd.MM.yyyy HH:mm")</small>
                                 <div class="mt-1">
                                     <a asp-controller="Auctions" asp-action="Details" asp-route-id="@item.AuctionId" class="text-decoration-none fw-bold small">
                                         @item.AuctionTitle

@@ -120,7 +120,7 @@
                                 {
                                     <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Sprzedane</span>
                                 }
-                                <span><i class="bi bi-clock me-1"></i> Koniec: @item.EndDate.ToShortDateString()</span>
+                                <span><i class="bi bi-clock me-1"></i> Koniec: @item.EndDate.ToPolandTime().ToShortDateString()</span>
                             </div>
 
                             <!-- Opis -->
@@ -149,7 +149,7 @@
                                     <i class="bi bi-person me-1"></i> @(item.SellerUserName)
                                 </div>
                                 <div>
-                                    <i class="bi bi-calendar3 me-1"></i> Dodano: @item.CreatedAt.ToString("dd.MM.yyyy")
+                                    <i class="bi bi-calendar3 me-1"></i> Dodano: @item.CreatedAt.ToPolandTime().ToString("dd.MM.yyyy")
                                 </div>
                                 <!-- Przycisk Edycji (Dla właściciela) -->
                                 @if (currentUserId != null && item.SellerId == currentUserId)

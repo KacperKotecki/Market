@@ -25,5 +25,5 @@ public class AdminAuctionDto
     public string ShortDescription { get; set; } = string.Empty;
 
     public bool IsBanned => Status == AuctionStatus.Banned || Status == AuctionStatus.Suspended;
-    public bool IsExpired => DateTime.Now > EndDate;
+    public bool IsExpired => DateTime.UtcNow > EndDate;
 }

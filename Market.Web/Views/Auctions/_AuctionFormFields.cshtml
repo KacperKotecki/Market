@@ -36,7 +36,7 @@
            class="form-control" 
            type="datetime-local" 
            asp-format="{0:yyyy-MM-ddTHH:mm}"
-           min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+           min="@DateTime.UtcNow.ToPolandTime().ToString("yyyy-MM-ddTHH:mm")"
            data-val="false" /> 
            
     <span asp-validation-for="EndDate" class="text-danger small"></span>

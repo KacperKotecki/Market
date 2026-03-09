@@ -77,7 +77,7 @@
                         else if (t.Status == Market.Web.Core.Models.OrderStatus.Cancelled) { rowClass = "text-decoration-line-through text-muted opacity-50"; }
 
                         <tr class="@rowClass">
-                            <td class="ps-4 text-muted small">@t.Date.ToString("dd.MM.yyyy")</td>
+                            <td class="ps-4 text-muted small">@t.Date.ToPolandTime().ToString("dd.MM.yyyy")</td>
                             <td>
                                 Sprzedaż: <strong>@t.Title</strong>
                                 <small class="d-block text-muted">Zamówienie #@t.OrderId</small>

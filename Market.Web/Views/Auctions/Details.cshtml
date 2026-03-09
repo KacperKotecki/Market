@@ -92,12 +92,12 @@
                             </li>
                             <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2">
                                 <span class="text-secondary"><i class="bi bi-calendar-event text-info me-2"></i>Dodano</span>
-                                <span>@Model.CreatedAt.ToString("dd.MM.yyyy")</span>
+                                <span>@Model.CreatedAt.ToPolandTime().ToString("dd.MM.yyyy")</span>
                             </li>
                             <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 pb-2">
                                 <span class="text-secondary"><i class="bi bi-clock-history text-danger me-2"></i>Koniec aukcji</span>
-                                <span class="@(Model.EndDate < DateTime.Now ? "text-danger fw-bold" : "")">
-                                    @Model.EndDate.ToString("dd.MM.yyyy HH:mm")
+                                <span class="@(Model.EndDate < DateTime.UtcNow ? "text-danger fw-bold" : "")">
+                                    @Model.EndDate.ToPolandTime().ToString("dd.MM.yyyy HH:mm")
                                 </span>
                             </li>
                             <li class="d-flex justify-content-between pb-2">
@@ -108,7 +108,7 @@
                     </div>
 
                     <div class="mt-auto">
-                        @if (Model.AuctionStatus == Market.Web.Core.Models.AuctionStatus.Active && Model.Quantity > 0 && Model.EndDate > DateTime.Now)
+                        @if (Model.AuctionStatus == Market.Web.Core.Models.AuctionStatus.Active && Model.Quantity > 0 && Model.EndDate > DateTime.UtcNow)
                         {
                             <a asp-controller="Order" asp-action="Checkout" asp-route-auctionId="@Model.Id" class="btn btn-success btn-lg w-100">
                                 KUP TERAZ
