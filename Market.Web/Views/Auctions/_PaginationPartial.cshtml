@@ -1,0 +1,109 @@
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-4" aria-label="Paginacja aukcji">
+        <ul class="pagination justify-content-center flex-wrap">
+
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-category="@Model.Category"
+                       asp-route-minPrice="@Model.MinPrice"
+                       asp-route-maxPrice="@Model.MaxPrice"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-pageNumber="@(Model.CurrentPage - 1)"
+                       aria-label="Poprzednia">&laquo;</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link" aria-disabled="true">&laquo;</span>
+                </li>
+            }
+
+            @{
+                int windowStart = Math.Max(1, Model.CurrentPage - 2);
+                int windowEnd   = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+            }
+
+            @if (windowStart > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-category="@Model.Category"
+                       asp-route-minPrice="@Model.MinPrice"
+                       asp-route-maxPrice="@Model.MaxPrice"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-pageNumber="1">1</a>
+                </li>
+                @if (windowStart > 2)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+            }
+
+            @for (int p = windowStart; p <= windowEnd; p++)
+            {
+                <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-category="@Model.Category"
+                       asp-route-minPrice="@Model.MinPrice"
+                       asp-route-maxPrice="@Model.MaxPrice"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-pageNumber="@p">@p</a>
+                </li>
+            }
+
+            @if (windowEnd < Model.TotalPages)
+            {
+                @if (windowEnd < Model.TotalPages - 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+                <li class="page-item">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-category="@Model.Category"
+                       asp-route-minPrice="@Model.MinPrice"
+                       asp-route-maxPrice="@Model.MaxPrice"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-pageNumber="@Model.TotalPages">@Model.TotalPages</a>
+                </li>
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-category="@Model.Category"
+                       asp-route-minPrice="@Model.MinPrice"
+                       asp-route-maxPrice="@Model.MaxPrice"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-pageNumber="@(Model.CurrentPage + 1)"
+                       aria-label="Następna">&raquo;</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link" aria-disabled="true">&raquo;</span>
+                </li>
+            }
+
+        </ul>
+    </nav>
+
+    <p class="text-center text-muted small mt-1">
+        Strona @Model.CurrentPage z @Model.TotalPages
+    </p>
+}
