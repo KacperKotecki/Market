@@ -22,7 +22,7 @@ services:
       postgres-db:
         condition: service_healthy
     volumes:
-      - ./market_uploads:/app/wwwroot/uploads
+      - market_uploads:/app/wwwroot/uploads
 
   postgres-db:
     image: postgres:15
@@ -43,3 +43,4 @@ services:
 
 volumes:
   postgres_data:
+  market_uploads:
