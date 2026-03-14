@@ -62,6 +62,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 formData.append("photos", fileInput.files[i]);
             }
 
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenElement) {
+                formData.append("__RequestVerificationToken", tokenElement.value);
+            }
+
             try {
                 const data = await generateDescription(formData);
 
