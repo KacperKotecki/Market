@@ -5,70 +5,83 @@
 }
 
 <link rel="stylesheet" href="~/css/auction-index.css" asp-append-version="true" />
-<h1>Aktualne Aukcje</h1>
-
-<p>
-    <a asp-action="Create" class="btn btn-success">+ Dodaj Nową</a>
-</p>
+<div class="d-flex justify-content-between align-items-end mb-4 mt-4">
+    <div>
+        <h1 class="fw-bold mb-1">
+            <i class="bi bi-shop me-2 text-primary"></i>Aktualne Aukcje
+        </h1>
+        <p class="text-muted mb-0">Przeglądaj najnowsze oferty lub zacznij sprzedawać już dziś.</p>
+    </div>
+    <div>
+        <a asp-action="Create" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold d-flex align-items-center gap-2" >
+            <span>Wystaw przedmiot</span>
+        </a>
+    </div>
+</div>
 
 <!-- Sekcja Filtrowania i Wyszukiwania -->
-<form asp-controller="Auctions" asp-action="Index" method="get" class="mb-5 p-3 rounded shadow-sm" id="search-form">
-    <div class="row g-3">
-        
-        <!-- Wyszukiwarka -->
-        <div class="col-md-12">
-            <div class="input-group">
-                  <input type="text" id="search-input" name="searchString" class="form-control" 
-                       placeholder="Szukaj po tytule lub opisie..."
-                       value="@Model.SearchString" />
-                <button type="submit" class="btn btn-primary">Szukaj</button>
+<div class="card border-0 shadow-sm mb-5" style="border-radius: 12px; background-color: #2b3035;"> 
+    <div class="card-body p-4">
+        <form asp-controller="Auctions" asp-action="Index" method="get" id="search-form">
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden">
+                        <input type="text" id="search-input" name="searchString" class="form-control border-0 px-4 shadow-none" 
+                               placeholder="Czego dzisiaj szukasz ..."
+                               value="@Model.SearchString" style="background-color: rgba(255,255,255,0.05);" />
+                        <button type="submit" class="btn btn-primary px-5 fw-bold border-0">Szukaj</button>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Filtr Kategorii -->
-        <div class="col-md-3">
-            <label class="form-label fw-bold">Kategoria</label>
-            <select name="category" class="form-select">
-                <option value="" selected="@(Model.Category == null)">-- Wszystkie --</option>
-                <option value="Elektronika" selected="@(Model.Category == "Elektronika")">Elektronika</option>
-                <option value="Moda" selected="@(Model.Category == "Moda")">Moda</option>
-                <option value="Dom i Ogród" selected="@(Model.Category == "Dom i Ogród")">Dom i Ogród</option>
-                <option value="Sport i Hobby" selected="@(Model.Category == "Sport i Hobby")">Sport i Hobby</option>
-                <option value="Motoryzacja" selected="@(Model.Category == "Motoryzacja")">Motoryzacja</option>
-                <option value="Kultura i Rozrywka" selected="@(Model.Category == "Kultura i Rozrywka")">Kultura i Rozrywka</option>
-                <option value="Inne" selected="@(Model.Category == "Inne")">Inne</option>
-            </select>
-        </div>
+            <div class="row g-3 align-items-end">
+                
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-uppercase opacity-75 ms-3">Kategoria</label>
+                    <select name="category" class="form-select shadow-sm rounded-pill px-4" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                        <option value="" selected="@(Model.Category == null)">Wszystkie kategorie</option>
+                        <option value="Elektronika" selected="@(Model.Category == "Elektronika")">Elektronika</option>
+                        <option value="Moda" selected="@(Model.Category == "Moda")">Moda</option>
+                        <option value="Dom i Ogród" selected="@(Model.Category == "Dom i Ogród")">Dom i Ogród</option>
+                        <option value="Sport i Hobby" selected="@(Model.Category == "Sport i Hobby")">Sport i Hobby</option>
+                        <option value="Motoryzacja" selected="@(Model.Category == "Motoryzacja")">Motoryzacja</option>
+                        <option value="Kultura i Rozrywka" selected="@(Model.Category == "Kultura i Rozrywka")">Kultura i Rozrywka</option>
+                        <option value="Inne" selected="@(Model.Category == "Inne")">Inne</option>
+                    </select>
+                </div>
 
-        <!-- Filtr Ceny -->
-        <div class="col-md-5">
-            <label class="form-label fw-bold">Cena (PLN)</label>
-            <div class="input-group">
-                <input type="number" name="minPrice" class="form-control"
-                       placeholder="Od" step="0.01"
-                       value="@Model.MinPrice" />
-                <span class="input-group-text">-</span>
-                <input type="number" name="maxPrice" class="form-control"
-                       placeholder="Do" step="0.01"
-                       value="@Model.MaxPrice" />
-            </div>
-        </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-uppercase opacity-75 ms-3">Cena (PLN)</label>
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden" style="border: 1px solid rgba(255,255,255,0.1);">
+                        <input type="number" name="minPrice" class="form-control text-center border-0 px-3 shadow-none"
+                               placeholder="Od" step="0.01" value="@Model.MinPrice" 
+                               style="background-color: rgba(255,255,255,0.05);" />
+                        <span class="input-group-text border-0" style="background-color: rgba(255,255,255,0.1);">-</span>
+                        <input type="number" name="maxPrice" class="form-control text-center border-0 px-3 shadow-none"
+                               placeholder="Do" step="0.01" value="@Model.MaxPrice" 
+                               style="background-color: rgba(255,255,255,0.05);" />
+                    </div>
+                </div>
 
-        <!-- Sortowanie -->
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Sortowanie i Akcje</label>
-            <div class="btn-group w-100" role="group">
-                <button type="submit" name="sortOrder" value="price_asc" class="btn btn-secondary">
-                    Cena &uarr;
-                </button>
-                <button type="submit" name="sortOrder" value="price_desc" class="btn btn-secondary">
-                    Cena &darr;
-                </button>
-                <a asp-action="Index" class="btn btn-danger">Wyczyść</a>
-            </div>
-        </div>
-    </div> 
-</form>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-uppercase opacity-75 ms-3">Sortowanie</label>
+                    <div class="d-flex gap-2">
+                        <select name="sortOrder" class="form-select shadow-sm rounded-pill px-4" onchange="this.form.submit()" 
+                                style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                            <option value="">Domyślne (Najnowsze)</option>
+                            <option value="price_asc" selected="@(Model.SortOrder == "price_asc")">Cena: od najtańszych</option>
+                            <option value="price_desc" selected="@(Model.SortOrder == "price_desc")">Cena: od najdroższych</option>
+                        </select>
+                        <a asp-action="Index" class="btn btn-danger shadow-sm px-4 rounded-pill" title="Wyczyść filtry">
+                            Wyczyść
+                        </a>
+                    </div>
+                </div>
+            </div> 
+        </form>
+    </div>
+</div>
 
 <div id="auction-results">
     <partial name="_AuctionListPartial" model="Model" />
