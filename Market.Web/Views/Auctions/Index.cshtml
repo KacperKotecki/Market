@@ -1,9 +1,7 @@
 @model Market.Web.Core.ViewModels.AuctionListViewModel
-@using System.Security.Claims 
-
 @{
     ViewData["Title"] = "Aukcje";
-    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    
 }
 
 <link rel="stylesheet" href="~/css/auction-index.css" asp-append-version="true" />
@@ -14,13 +12,13 @@
 </p>
 
 <!-- Sekcja Filtrowania i Wyszukiwania -->
-<form asp-controller="Auctions" asp-action="Index" method="get" class="mb-5 p-3 rounded shadow-sm">
+<form asp-controller="Auctions" asp-action="Index" method="get" class="mb-5 p-3 rounded shadow-sm" id="search-form">
     <div class="row g-3">
         
         <!-- Wyszukiwarka -->
         <div class="col-md-12">
             <div class="input-group">
-                <input type="text" name="searchString" class="form-control"
+                  <input type="text" id="search-input" name="searchString" class="form-control" 
                        placeholder="Szukaj po tytule lub opisie..."
                        value="@Model.SearchString" />
                 <button type="submit" class="btn btn-primary">Szukaj</button>
@@ -72,105 +70,11 @@
     </div> 
 </form>
 
-
-<div class="d-flex flex-column gap-3">
-    @foreach (var item in Model.Auctions) {
-        <div class="card auction-row-card rounded-3 overflow-hidden position-relative">
-            <div class="row g-0 h-100">
-                
-                @{
-                    var indexImage = item.ThumbnailPath
-                                    ?? "https://via.placeholder.com/300x220?text=Brak+Zdjecia";
-                }
-
-                <!-- 1. LEWA STRONA: ZDJĘCIE (col-md-3 lub 4 w zależności od preferencji) -->
-                <div class="col-md-4 col-xl-3">
-                    <div class="auction-img-container h-100">
-                        <!-- Obrazek -->
-                        <img src="@indexImage" class="w-100 h-100 object-fit-cover" alt="@item.Title" />
-
-                        <!-- Badge Kategorii na zdjęciu -->
-                        <span class="badge bg-black bg-opacity-75 position-absolute bottom-0 start-0 m-2 border border-secondary">
-                            @item.Category
-                        </span>
-                    </div>
-                </div>
-
-                <!-- 2. ŚRODEK I PRAWA STRONA -->
-                <div class="col-md-8 col-xl-9">
-                    <div class="card-body h-100 d-flex flex-column flex-md-row">
-                        
-                        <!-- ŚRODEK: TREŚĆ (Flex fill rozpycha) -->
-                        <div class="flex-grow-1 pe-md-4">
-                            <!-- Link jest rozciągnięty na całość, ale z niższym z-index niż przyciski -->
-                            <h4 class="card-title fw-bold mb-2">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="text-reset text-decoration-none stretched-link">
-                                    @item.Title
-                                </a>
-                            </h4>
-
-                            <!-- Parametry (Atrybuty w stylu Allegro) -->
-                            <div class="mb-3 text-secondary small d-flex flex-wrap gap-3">
-                                <span><i class="bi bi-tag me-1"></i> @item.Category</span>
-                                @if (item.Quantity > 0)
-                                {
-                                    <span><i class="bi bi-box-seam me-1"></i> Dostępne: @item.Quantity szt.</span>
-                                }
-                                else
-                                {
-                                    <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Sprzedane</span>
-                                }
-                                <span><i class="bi bi-clock me-1"></i> Koniec: @item.EndDate.ToPolandTime().ToShortDateString()</span>
-                            </div>
-
-                            <!-- Opis -->
-                            <p class="card-text text-secondary text-truncate-3 mb-0">
-                                @item.Description
-                            </p>
-                        </div>
-
-                        <!-- PRAWA STRONA: CENA I STOPKA -->
-                        <div class="price-section ps-md-3 border-start-md border-secondary border-opacity-25">
-                            
-                            <!-- Cena -->
-                            <div class="text-md-end mb-3">
-                                <h3 class="text-warning fw-bolder mb-0">@item.Price.ToString("N2") <small class="fs-6 text-muted">PLN</small></h3>
-                                <small class="text-muted d-block mt-1">
-                                    @if(item.GeneratedByAi)
-                                    {
-                                        <span class="badge bg-info bg-opacity-10 text-info border border-info mb-2">Opis wygenerowany przez AI</span>
-                                    }
-                                </small>
-                            </div>
-
-                            <!-- Info o sprzedawcy i dacie -->
-                            <div class="mt-auto text-md-end text-secondary small">
-                                <div class="mb-1">
-                                    <i class="bi bi-person me-1"></i> @(item.SellerUserName)
-                                </div>
-                                <div>
-                                    <i class="bi bi-calendar3 me-1"></i> Dodano: @item.CreatedAt.ToPolandTime().ToString("dd.MM.yyyy")
-                                </div>
-                                <!-- Przycisk Edycji (Dla właściciela) -->
-                                @if (currentUserId != null && item.SellerId == currentUserId)
-                                {
-                                    <a asp-action="Edit" asp-route-id="@item.Id" 
-                                   class="btn btn-outline-secondary btn-sm mt-2 position-relative"
-                                   style="z-index: 2;"
-                                   title="Edytuj ofertę">
-                                    Edytuj
-                                    </a>
-                                }
-                            </div>
-
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    }
+<div id="auction-results">
+    <partial name="_AuctionListPartial" model="Model" />
 </div>
 
-<partial name="_PaginationPartial" model="Model" />
+
+@section Scripts {
+    <script src="~/js/search.js" asp-append-version="true"></script>
+}

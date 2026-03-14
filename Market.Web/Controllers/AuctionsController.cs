@@ -45,7 +45,18 @@ public class AuctionsController : Controller
         filter.PageSize = 20;
         filter.Status = AuctionStatus.Active;
         var model = await _auctionService.GetAllWithFiltersAsync(filter);
+        
         return View(model);
+        
+    }
+    [AllowAnonymous]
+    public async Task<IActionResult> Search(AuctionFilter filter)
+    {
+        filter.PageSize = 20;
+        filter.Status = AuctionStatus.Active;
+        var model = await _auctionService.GetAllWithFiltersAsync(filter);
+        
+        return PartialView("_AuctionListPartial",model);
     }
 
     [Buyer]
