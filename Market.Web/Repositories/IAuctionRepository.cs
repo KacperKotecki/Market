@@ -14,4 +14,8 @@ public interface IAuctionRepository
     Task AddAsync(Auction auction);
     
     Task UpdateAsync(Auction auction);
+
+    Task UpdateStatusAsync(int auctionId, AuctionStatus status);
+
+    Task AddImagesAsync(IEnumerable<AuctionImage> images);
 }

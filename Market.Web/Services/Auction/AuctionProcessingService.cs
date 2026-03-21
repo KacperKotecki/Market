@@ -13,7 +13,9 @@ public class AuctionProcessingService : IAuctionProcessingService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public AuctionProcessingService(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment)
+    public AuctionProcessingService(
+        IUnitOfWork unitOfWork, 
+        IWebHostEnvironment webHostEnvironment)
     {
         _unitOfWork = unitOfWork;
         _webHostEnvironment = webHostEnvironment;

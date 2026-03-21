@@ -6,14 +6,11 @@ public class Auction
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = "Tytuł jest wymagany.")]
     [StringLength(100, MinimumLength = 3)]
     public string Title { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Opis jest wymagany.")]
     public string Description { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Cena jest wymagana.")]
     [Range(0.01, 1000000)]
     public decimal Price { get; set; }
 

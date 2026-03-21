@@ -63,6 +63,7 @@ builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>()
             durationOfBreak: TimeSpan.FromSeconds(30)));
 
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
+builder.Services.AddScoped<IAuctionImageWorker, AuctionImageWorker>(); 
 builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 
 var app = builder.Build();

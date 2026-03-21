@@ -92,4 +92,16 @@ public class AuctionRepository : IAuctionRepository
     {
         _context.Auctions.Update(auction);
     }
+
+    public async Task UpdateStatusAsync(int auctionId, AuctionStatus status)
+    {
+        await _context.Auctions
+            .Where(a => a.Id == auctionId)
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.AuctionStatus, status));
+    }
+
+    public async Task AddImagesAsync(IEnumerable<AuctionImage> images)
+    {
+        await _context.AuctionImages.AddRangeAsync(images);
+    }
 }

@@ -8,6 +8,10 @@ namespace Market.Web.Core.Models
     Expired = 3,     // po terminie
     Cancelled = 4,   // anulowana przez sprzedawcę
     Suspended = 5,    // zawieszona przez administratora
-    Banned = 6 // zablokowana
+    Banned = 6, // zablokowana
+    ImagesProcessing = 7,
+    ImagesReady = 8,
+    AiProcessing = 9,
+    AiGenerationFailed = 10
     }
 }
