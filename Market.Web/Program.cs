@@ -9,6 +9,9 @@ using Market.Web.Persistence;
 using Market.Web.Core.Options;
 using Polly;
 using Market.Web.Services.AI;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Market.Web.Authorization;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -23,6 +26,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Hangfire setup
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(ops => ops.UseNpgsqlConnection(connectionString)));
+
+builder.Services.AddHangfireServer();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -92,7 +104,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new HangfireAuthorizationFilter()]
+});
 
 app.MapControllerRoute(
     name: "default",
