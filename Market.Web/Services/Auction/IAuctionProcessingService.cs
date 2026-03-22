@@ -11,4 +11,5 @@ public interface IAuctionProcessingService
 
     Task<AuctionDetailsViewModel?> GetAuctionDetailsViewModelAsync(int id);
     Task<AuctionFormViewModel?> GetAuctionFormViewModelAsync(int id);
+    Task ScheduleAiGenerationAsync(int auctionId);
 }

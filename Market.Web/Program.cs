@@ -51,6 +51,7 @@ builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();  
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPromptProvider, PromptProvider>();
+builder.Services.AddScoped<IAiWorker, AiWorker>();
 
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>()
     .AddTransientHttpErrorPolicy(policy =>

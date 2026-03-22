@@ -57,6 +57,46 @@ public class OpenRouterAiService : IADescriptionService
             }
         }
 
+        return await SendRequestToAiAsync(imageContents);
+    }
+
+    public async Task<AuctionDraftDto> GenerateFromWebPFilesAsync(List<string> imagePaths)
+    {
+        var imageContents = new List<object>();
+
+        foreach (var path in imagePaths)
+        {
+            if (File.Exists(path))
+            {
+                using var fileStream = File.OpenRead(path);
+                int length = (int)fileStream.Length;
+                
+                byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(length);
+                
+                try
+                {
+                    int bytesRead = await fileStream.ReadAsync(buffer, 0, length);
+                    var base64 = Convert.ToBase64String(buffer, 0, bytesRead);
+
+                    // Zakładamy webp z background job
+                    imageContents.Add(new 
+                    {
+                        type = "image_url",
+                        image_url = new { url = $"data:image/webp;base64,{base64}" }
+                    });
+                }
+                finally
+                {
+                    System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+                }
+            }
+        }
+
+        return await SendRequestToAiAsync(imageContents);
+    }
+
+    private async Task<AuctionDraftDto> SendRequestToAiAsync(List<object> imageContents)
+    {
         string systemPrompt = await _promptProvider.GetSystemPromptAsync();
 
         var messages = new List<object>

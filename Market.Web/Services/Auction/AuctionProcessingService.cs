@@ -1,10 +1,13 @@
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Core.Helpers;
+using Market.Web.Core.Exceptions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Webp;
 using Market.Web.Repositories;
+using Market.Web.Services.AI;
+using Hangfire;
 
 namespace Market.Web.Services;
 
@@ -12,13 +15,34 @@ public class AuctionProcessingService : IAuctionProcessingService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly IBackgroundJobClient _jobClient;
 
     public AuctionProcessingService(
         IUnitOfWork unitOfWork, 
-        IWebHostEnvironment webHostEnvironment)
+        IWebHostEnvironment webHostEnvironment,
+        IBackgroundJobClient jobClient)
     {
         _unitOfWork = unitOfWork;
         _webHostEnvironment = webHostEnvironment;
+        _jobClient = jobClient;
+    }
+
+    public async Task ScheduleAiGenerationAsync(int auctionId)
+    {
+        var auction = await _unitOfWork.Auctions.GetByIdAsync(auctionId);
+        
+        if (auction == null) 
+            throw new KeyNotFoundException("Auction draft not found.");
+
+        if (auction.AuctionStatus == AuctionStatus.ImagesProcessing)
+            throw new AuctionProcessingException("Zjęcia wciąż się przetwarzają.");
+
+        if (auction.AuctionStatus == AuctionStatus.AiProcessing)
+            throw new AiProcessingConflictException("Zadanie AI jest już w toku.");
+
+        await _unitOfWork.Auctions.UpdateStatusAsync(auctionId, AuctionStatus.AiProcessing);
+
+        _jobClient.Enqueue<IAiWorker>(x => x.GenerateDescriptionJobAsync(auctionId));
     }
 
     public async Task<List<AuctionImage>> ProcessUploadedImagesWebpAsync(List<IFormFile> photos)

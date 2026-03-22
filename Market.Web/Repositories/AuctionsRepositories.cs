@@ -100,6 +100,21 @@ public class AuctionRepository : IAuctionRepository
             .ExecuteUpdateAsync(s => s.SetProperty(b => b.AuctionStatus, status));
     }
 
+    public async Task UpdateAiDataAsync(int auctionId, string title, string description, string category, decimal? suggestedPrice)
+    {
+        var finalPrice = suggestedPrice.HasValue && suggestedPrice.Value > 0 ? suggestedPrice.Value : 0.01m; // 0.01 is minimum according to attribute
+
+        await _context.Auctions
+            .Where(a => a.Id == auctionId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(b => b.Title, title)
+                .SetProperty(b => b.Description, description)
+                .SetProperty(b => b.Category, category)
+                .SetProperty(b => b.Price, b => finalPrice > 0.01m ? finalPrice : b.Price) // update only if > 0.01 or fallback logic
+                .SetProperty(b => b.GeneratedByAi, true)
+                .SetProperty(b => b.AuctionStatus, AuctionStatus.ImagesReady));
+    }
+
     public async Task AddImagesAsync(IEnumerable<AuctionImage> images)
     {
         await _context.AuctionImages.AddRangeAsync(images);

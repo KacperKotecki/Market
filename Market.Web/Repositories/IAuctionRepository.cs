@@ -17,5 +17,7 @@ public interface IAuctionRepository
 
     Task UpdateStatusAsync(int auctionId, AuctionStatus status);
 
+    Task UpdateAiDataAsync(int auctionId, string title, string description, string category, decimal? suggestedPrice);
+
     Task AddImagesAsync(IEnumerable<AuctionImage> images);
 }
