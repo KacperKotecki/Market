@@ -20,6 +20,7 @@
 
     <form asp-action="Create" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="Id" id="AuctionId" />
 
         <!-- GALERIA SWIPER (Domyślnie ukryta d-none, JS ją pokaże) -->
         <div id="galleryContainer" class="d-none mb-4">

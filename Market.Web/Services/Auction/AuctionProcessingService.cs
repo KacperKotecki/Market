@@ -45,6 +45,32 @@ public class AuctionProcessingService : IAuctionProcessingService
         _jobClient.Enqueue<IAiWorker>(x => x.GenerateDescriptionJobAsync(auctionId));
     }
 
+    public Task CleanupTemporaryFilesJobAsync()
+    {
+        var tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "market_uploads", "temp");
+        if (!Directory.Exists(tempFolder)) return Task.CompletedTask;
+
+        var files = Directory.EnumerateFiles(tempFolder);
+        var thresholdDate = DateTime.UtcNow.AddHours(-24);
+
+        foreach (var file in files)
+        {
+            if (File.GetLastWriteTimeUtc(file) < thresholdDate)
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception)
+                {
+                    // Ignore locked files or access denied, will be handled next time
+                }
+            }
+        }
+        
+        return Task.CompletedTask;
+    }
+
     public async Task<List<AuctionImage>> ProcessUploadedImagesWebpAsync(List<IFormFile> photos)
     {
         const long maxFileSize = 10 * 1024 * 1024; 

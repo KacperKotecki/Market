@@ -83,21 +83,31 @@ public class AuctionsController : Controller
     [Seller]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(AuctionFormViewModel vm, List<IFormFile> photos)
+    public async Task<IActionResult> Create(AuctionFormViewModel vm)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
         if (ModelState.IsValid)
         {
+            if (vm.Id <= 0)
+            {
+                ModelState.AddModelError("", "Wystąpił błąd podczas dodawania zdjęć (brak ID aukcji). Upewnij się, że zdjęcia zostały załadowane prawidłowo.");
+                return View(vm);
+            }
+
             try
             {
-                await _auctionService.CreateAuctionAsync(vm, user.Id, photos);
-                return RedirectToAction(nameof(Index));
+                await _auctionService.FinalizeCreateAuctionAsync(vm, user.Id);
+                return RedirectToAction(nameof(Details), new { id = vm.Id });
             }
             catch (AuctionException ex)
             {
                 ModelState.AddModelError(ex.PropertyName ?? "EndDate", ex.Message);
+            }
+            catch (OrderAuthorizationException)
+            {
+                return Forbid();
             }
         }
         return View(vm);

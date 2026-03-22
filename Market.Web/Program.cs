@@ -12,6 +12,7 @@ using Market.Web.Services.AI;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Market.Web.Authorization;
+using Market.Web.Services;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -118,5 +119,10 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auctions}/{action=Index}/{id?}");
 app.MapRazorPages();
+
+RecurringJob.AddOrUpdate<IAuctionProcessingService>(
+    "cleanup-temporary-files",
+    service => service.CleanupTemporaryFilesJobAsync(),
+    "0 3 * * *");
 
 app.Run();

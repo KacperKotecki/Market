@@ -95,6 +95,35 @@ public class AuctionService : IAuctionService
         await _unitOfWork.CompleteAsync();
     }
 
+    public async Task FinalizeCreateAuctionAsync(AuctionFormViewModel vm, string requestingUserId)
+    {
+        var auctionInDb = await _unitOfWork.Auctions.GetByIdAsync(vm.Id);
+        if (auctionInDb == null) throw new AuctionException("Aukcja nie istnieje.", nameof(vm.Id));
+
+        if (auctionInDb.UserId != requestingUserId)
+            throw new OrderAuthorizationException("Brak uprawnień do edycji tej aukcji.");
+
+        var endDateUtc = vm.EndDate.ToUtcFromPolandTime(); // throws AuctionException on DST gap
+
+        if (endDateUtc <= DateTime.UtcNow)
+            throw new AuctionException(
+                "Data zakończenia musi być w przyszłości.",
+                nameof(vm.EndDate));
+
+        auctionInDb.Title         = vm.Title;
+        auctionInDb.Description   = vm.Description;
+        auctionInDb.Price         = vm.Price;
+        auctionInDb.Quantity      = vm.Quantity;
+        auctionInDb.Category      = vm.Category;
+        auctionInDb.EndDate       = endDateUtc;
+        auctionInDb.IsCompanySale = vm.IsCompanySale;
+        auctionInDb.GeneratedByAi = vm.GeneratedByAi;
+
+        auctionInDb.AuctionStatus = AuctionStatus.Active;
+
+        await _unitOfWork.CompleteAsync();
+    }
+
     public async Task UpdateAuctionAsync(AuctionFormViewModel vm, string requestingUserId)
     {
         var auctionInDb = await _unitOfWork.Auctions.GetByIdAsync(vm.Id);

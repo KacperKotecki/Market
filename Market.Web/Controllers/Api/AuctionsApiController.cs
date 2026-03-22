@@ -71,4 +71,21 @@ public class AuctionsApiController : ControllerBase
 
         return Accepted(new { auctionId = auction.Id });
     }
+
+    [HttpGet("{id}/status")]
+    public async Task<IActionResult> GetStatus(int id)
+    {
+        var auction = await _unitOfWork.Auctions.GetByIdAsync(id);
+        if (auction == null) return NotFound();
+
+        return Ok(new
+        {
+            status = auction.AuctionStatus.ToString(),
+            title = auction.Title,
+            description = auction.Description,
+            price = auction.Price,
+            category = auction.Category,
+            generatedByAi = auction.GeneratedByAi
+        });
+    }
 }

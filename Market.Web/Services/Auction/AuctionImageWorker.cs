@@ -27,7 +27,7 @@ public class AuctionImageWorker : IAuctionImageWorker
     {
         const long maxFileSize = 10 * 1024 * 1024;
         var images = new List<AuctionImage>();
-        var createdWebpPaths = new List<string>(); // Do śledzenia utworzonych plików WebP (rollback dyskowy)
+        var createdWebpPaths = new List<string>();
         var uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
         if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
 
@@ -42,7 +42,7 @@ public class AuctionImageWorker : IAuctionImageWorker
                 var fileInfo = new FileInfo(tempPath);
                 if (fileInfo.Length == 0 || fileInfo.Length > maxFileSize)
                 {
-                    continue; // Pusty lub zbyt duży, zostanie usunięty później
+                    continue;
                 }
 
                 var fileName = Guid.NewGuid().ToString() + ".webp";

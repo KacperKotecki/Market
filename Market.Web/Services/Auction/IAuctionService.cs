@@ -12,6 +12,7 @@ public interface IAuctionService
     Task<Auction?> GetByIdAsync(int id);
     
     Task CreateAuctionAsync(AuctionFormViewModel vm, string userId, List<IFormFile> photos);
+    Task FinalizeCreateAuctionAsync(AuctionFormViewModel vm, string requestingUserId);
     Task UpdateAuctionAsync(AuctionFormViewModel vm, string requestingUserId);
     Task SoftDeleteAuctionAsync(int id);
 }
