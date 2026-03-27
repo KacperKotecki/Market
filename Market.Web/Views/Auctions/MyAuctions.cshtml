@@ -123,14 +123,43 @@
 
                                         <div class="d-grid gap-2 mt-auto text-end">
 
-                                            @if (item.AuctionStatus == AuctionStatus.Active)
+                                            @if(item.AuctionStatus == AuctionStatus.Active ||
+                                            item.AuctionStatus == AuctionStatus.Draft ||
+                                            item.AuctionStatus == AuctionStatus.ImagesReady ||
+                                            item.AuctionStatus == AuctionStatus.AiGenerationFailed)
                                             {
                                                 <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm fw-bold">
                                                     <i class="bi bi-pencil-square me-1"></i> Edytuj
                                                 </a>
-                                                <!-- Zakończ sprzedaż — POST, nie GET link -->
+                                            }
+                                            else if(item.AuctionStatus == AuctionStatus.ImagesProcessing)
+                                            {
+                                                <button class="btn btn-secondary btn-sm opacity-50" disabled>
+                                                    <i class="bi bi-lock me-1"></i> Przetwarzanie zdjęć ...
+                                                </button>
+                                            }
+                                            else if(item.AuctionStatus == AuctionStatus.AiProcessing)
+                                            {
+                                                <button class="btn btn-secondary btn-sm opacity-50" disabled>
+                                                    <i class="bi bi-lock me-1"></i> Generowanie opisu ...
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                            }
+
+                                            @if(item.AuctionStatus != AuctionStatus.AiProcessing && 
+                                            item.AuctionStatus != AuctionStatus.ImagesProcessing)
+                                            {
+                                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
+                                                Podgląd
+                                                </a>
+                                            }
+
+                                            @if(item.AuctionStatus == AuctionStatus.Active)
+                                            {
                                                 <form asp-action="SoftDelete" asp-route-id="@item.Id" method="post"
-                                                      onsubmit="return confirm('Czy na pewno chcesz zakończyć sprzedaż?');">
+                                                      onsubmit="return confirm('Czy na pewno chcesz czyć sprzedaż?');">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="id" value="@item.Id" />
                                                     <button type="submit" class="btn btn-outline-danger btn-sm w-100">
@@ -138,16 +167,9 @@
                                                     </button>
                                                 </form>
                                             }
-                                            else
-                                            {
-                                                <button class="btn btn-secondary btn-sm opacity-50" disabled>
-                                                    <i class="bi bi-lock me-1"></i> Zakończona
-                                                </button>
-                                            }
 
-                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
-                                                Podgląd
-                                            </a>
+
+                                        
                                             <span class="text-muted x-small mt-2">Utworzono: @item.CreatedAtFormatted</span>
                                         </div>
                                     </div>

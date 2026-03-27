@@ -13,5 +13,6 @@ namespace Market.Web.Core.Models
     ImagesReady = 8,
     AiProcessing = 9,
     AiGenerationFailed = 10
+
     }
 }
