@@ -33,11 +33,11 @@
                             
                             <div class="rating">
                                 <!-- Kolejność odwrócona dla CSS (5 jest pierwsza w kodzie, ale po prawej) -->
-                                <input type="radio" id="star5" name="Rating" value="5" /><label for="star5" title="Rewelacja"></label>
-                                <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="Dobrze"></label>
-                                <input type="radio" id="star3" name="Rating" value="3" /><label for="star3" title="Średnio"></label>
-                                <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="Słabo"></label>
-                                <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="Tragedia"></label>
+                                <input type="radio" id="star5" name="Rating" value="5" /><label for="star5" title="Rewelacja"><span class="visually-hidden">5 gwiazdek</span></label>
+                                <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="Dobrze"><span class="visually-hidden">4 gwiazdki</span></label>
+                                <input type="radio" id="star3" name="Rating" value="3" /><label for="star3" title="Średnio"><span class="visually-hidden">3 gwiazdki</span></label>
+                                <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="Słabo"><span class="visually-hidden">2 gwiazdki</span></label>
+                                <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="Tragedia"><span class="visually-hidden">1 gwiazdka</span></label>
                             </div>
                             <span asp-validation-for="Rating" class="text-danger small d-block mt-1"></span>
                         </div>

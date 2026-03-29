@@ -21,7 +21,7 @@ namespace Market.Web.Core.ViewModels
         public string? PrivateIBAN { get; set; }
 
         [Display(Name = "Chcę podać dane firmowe / fakturę")]
-        public bool HasCompanyProfile { get; set; }
+        public bool? HasCompanyProfile { get; set; }
 
         public string? CompanyName { get; set; }
         public string? NIP { get; set; }

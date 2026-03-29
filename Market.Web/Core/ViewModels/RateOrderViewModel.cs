@@ -4,7 +4,7 @@ namespace Market.Web.Core.ViewModels
 {
     public class RateOrderViewModel
     {
-        public int OrderId { get; set; }
+        public int? OrderId { get; set; }
 
         public string AuctionTitle { get; set; } = string.Empty;
         public string SellerName { get; set; } = string.Empty;

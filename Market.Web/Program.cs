@@ -77,7 +77,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         
-        if (context.Database.GetPendingMigrations().Any())
+        if ((await context.Database.GetPendingMigrationsAsync()).Any())
         {
             await context.Database.MigrateAsync();
         }
@@ -125,4 +125,4 @@ RecurringJob.AddOrUpdate<IAuctionProcessingService>(
     service => service.CleanupTemporaryFilesJobAsync(),
     "0 3 * * *");
 
-app.Run();
+await app.RunAsync();

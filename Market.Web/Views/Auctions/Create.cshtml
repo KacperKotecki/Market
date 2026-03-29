@@ -37,15 +37,14 @@
         <!-- INPUT I PRZYCISK AI -->
         <div class="row g-3 mb-4"> 
             <div class="col-12">
-                <label class="form-label fw-bold">Zdjęcia przedmiotu</label>
-                <!-- Tutaj id="photosInput" jest kluczowe dla JS -->
+                <label for="photosInput" class="form-label fw-bold">Zdjęcia przedmiotu</label>
                 <input type="file" name="photos" id="photosInput" class="form-control bg-dark text-light border-secondary" multiple accept="image/*" />
             </div>
 
             <div class="col-12">
                 <button type="button" id="aiButton" class="btn btn-warning w-100 fw-bold shadow-sm py-3">
                     ✨ Generuj opis z AI
-                    <span id="spinner" class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true"></span>
+                    <output id="spinner" class="spinner-border spinner-border-sm d-none ms-2" aria-hidden="true"></output>
                 </button>
             </div>
         </div>

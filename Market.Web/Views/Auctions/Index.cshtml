@@ -27,7 +27,8 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden">
-                        <input type="text" name="searchString" class="form-control border-0 px-4 shadow-none" 
+                        <label for="searchString" class="visually-hidden">Wyszukaj produkt</label>
+                        <input type="text" id="searchString" name="searchString" class="form-control border-0 px-4 shadow-none" 
                                placeholder="Czego dzisiaj szukasz ..."
                                value="@Model.SearchString" style="background-color: rgba(255,255,255,0.05);" />
                         <button type="submit" class="btn btn-primary px-5 fw-bold border-0">Szukaj</button>
@@ -38,8 +39,8 @@
             <div class="row g-3 align-items-end">
                 
                 <div class="col-md-4">
-                    <label class="form-label small fw-bold text-uppercase opacity-75 ms-3">Kategoria</label>
-                    <select name="category" class="form-select shadow-sm rounded-pill px-4" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                    <label for="category" class="form-label small fw-bold text-uppercase opacity-75 ms-3">Kategoria</label>
+                    <select id="category" name="category" class="form-select shadow-sm rounded-pill px-4" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
                         <option value="" selected="@(Model.Category == null)">Wszystkie kategorie</option>
                         <option value="Elektronika" selected="@(Model.Category == "Elektronika")">Elektronika</option>
                         <option value="Moda" selected="@(Model.Category == "Moda")">Moda</option>
@@ -52,22 +53,23 @@
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label small fw-bold text-uppercase opacity-75 ms-3">Cena (PLN)</label>
+                    <label for="minPrice" class="form-label small fw-bold text-uppercase opacity-75 ms-3">Cena (PLN)</label>
                     <div class="input-group shadow-sm rounded-pill overflow-hidden" style="border: 1px solid rgba(255,255,255,0.1);">
-                        <input type="number" name="minPrice" class="form-control text-center border-0 px-3 shadow-none"
+                        <input type="number" id="minPrice" name="minPrice" class="form-control text-center border-0 px-3 shadow-none"
                                placeholder="Od" step="0.01" value="@Model.MinPrice" 
                                style="background-color: rgba(255,255,255,0.05);" />
                         <span class="input-group-text border-0" style="background-color: rgba(255,255,255,0.1);">-</span>
-                        <input type="number" name="maxPrice" class="form-control text-center border-0 px-3 shadow-none"
+                        <label for="maxPrice" class="visually-hidden">Do</label>
+                        <input type="number" id="maxPrice" name="maxPrice" class="form-control text-center border-0 px-3 shadow-none"
                                placeholder="Do" step="0.01" value="@Model.MaxPrice" 
                                style="background-color: rgba(255,255,255,0.05);" />
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label small fw-bold text-uppercase opacity-75 ms-3">Sortowanie</label>
+                    <label for="sortOrder" class="form-label small fw-bold text-uppercase opacity-75 ms-3">Sortowanie</label>
                     <div class="d-flex gap-2">
-                        <select name="sortOrder" class="form-select shadow-sm rounded-pill px-4" onchange="this.form.submit()" 
+                        <select id="sortOrder" name="sortOrder" class="form-select shadow-sm rounded-pill px-4" onchange="this.form.submit()" 
                                 style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
                             <option value="">Domyślne (Najnowsze)</option>
                             <option value="price_asc" selected="@(Model.SortOrder == "price_asc")">Cena: od najtańszych</option>

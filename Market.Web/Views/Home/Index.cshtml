@@ -171,14 +171,15 @@
                             <label class="small text-uppercase fw-bold text-info mb-3 d-block"><i class="bi bi-person-badge-fill me-2"></i>Admin</label>
                             
                             <div class="input-group mb-3">
+                                <label for="adminEmail" class="visually-hidden">Adres email admina</label>
                                 <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-envelope"></i></span>
-                                
-                                <input type="text" class="form-control bg-dark border-secondary text-white copy-cursor py-2" value="admin@market.com" readonly onclick="copyToClipboard(this)">
+                                <input type="text" id="adminEmail" class="form-control bg-dark border-secondary text-white copy-cursor py-2" value="admin@market.com" readonly onclick="copyToClipboard(this)">
                             </div>
                             <div class="input-group">
+                                <label for="adminPassword" class="visually-hidden">Hasło admina</label>
                                 <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-lock"></i></span>
-
-                                   <input type="text" 
+                                <input type="text" 
+                                    id="adminPassword"
                                     class="form-control bg-dark border-secondary text-white copy-cursor py-2" 
                                     value="••••••••" 
                                     data-rot13="MND!2jfkPQR#" 
@@ -193,14 +194,18 @@
                             <label class="small text-uppercase fw-bold text-success mb-3 d-block"><i class="bi bi-person-check-fill me-2"></i>Kupujący / Sprzedawca</label>
                             
                             <div class="input-group mb-3">
+                                <label for="userEmail" class="visually-hidden">Adres email użytkownika</label>
                                 <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-envelope"></i></span>
-                                <input type="text" class="form-control bg-dark border-secondary text-white copy-cursor py-2" value="userdemo@market.com" readonly onclick="copyToClipboard(this)">
+                                <input type="text" id="userEmail" class="form-control bg-dark border-secondary text-white copy-cursor py-2" value="userdemo@market.com" readonly onclick="copyToClipboard(this)">
                             </div>
                             <div class="input-group">
+                                <label for="userPassword" class="visually-hidden">Hasło użytkownika</label>
                                 <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-lock"></i></span>
+                                <input type="text" id="userPassword" class="form-control bg-dark border-secondary text-white copy-cursor py-2" value="••••••••" data-rot13="HfRe!2jfkPQR#" readonly onclick="revealRot13(this)">
+                            </div>
 
                                     <input type="text" 
-                                        class="form-control bg-dark border-secondary text-white copy-cursor py-2" 
+                                        class="form-control bg-dark border-secondary text-white copy-cursor py-2 d-none" 
                                         value="••••••••" 
                                         data-rot13="AfDAQXsoQLWgh2HMOHR737UOKku@@"
                                         readonly 

@@ -30,12 +30,12 @@
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="FirstName" class="form-label fw-bold"></label>
+                                <label asp-for="FirstName" class="form-label fw-bold">Imię</label>
                                 <input asp-for="FirstName" class="form-control" />
                                 <span asp-validation-for="FirstName" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="LastName" class="form-label fw-bold"></label>
+                                <label asp-for="LastName" class="form-label fw-bold">Nazwisko</label>
                                 <input asp-for="LastName" class="form-control" />
                                 <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
@@ -45,22 +45,22 @@
                         
                         <div class="row g-3">
                             <div class="col-md-8">
-                                <label asp-for="ShippingAddress.Street" class="form-label"></label>
+                                <label asp-for="ShippingAddress.Street" class="form-label">Ulica i numer wg dostawcy</label>
                                 <input asp-for="ShippingAddress.Street" class="form-control" placeholder="Ulica i numer" />
                                 <span asp-validation-for="ShippingAddress.Street" class="text-danger"></span>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="ShippingAddress.PostalCode" class="form-label"></label>
+                                <label asp-for="ShippingAddress.PostalCode" class="form-label">Kod pocztowy</label>
                                 <input asp-for="ShippingAddress.PostalCode" class="form-control" placeholder="00-000" />
                                 <span asp-validation-for="ShippingAddress.PostalCode" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="ShippingAddress.City" class="form-label"></label>
+                                <label asp-for="ShippingAddress.City" class="form-label">Miasto</label>
                                 <input asp-for="ShippingAddress.City" class="form-control" />
                                 <span asp-validation-for="ShippingAddress.City" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="ShippingAddress.Country" class="form-label"></label>
+                                <label asp-for="ShippingAddress.Country" class="form-label">Kraj</label>
                                 <input asp-for="ShippingAddress.Country" class="form-control" value="Polska" />
                                 <span asp-validation-for="ShippingAddress.Country" class="text-danger"></span>
                             </div>
@@ -75,7 +75,7 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label asp-for="PrivateIBAN" class="form-label fw-bold"></label>
+                            <label asp-for="PrivateIBAN" class="form-label fw-bold">Prywatne konto IBAN</label>
                             <input asp-for="PrivateIBAN" class="form-control" placeholder="PL..." />
                             <div class="form-text">Podanie numeru konta jest opcjonalne, ale konieczne do otrzymywania wpłat za sprzedane przedmioty.</div>
                             <span asp-validation-for="PrivateIBAN" class="text-danger"></span>
@@ -117,19 +117,19 @@
                         <h6 class="mt-4 mb-3 border-bottom pb-2">Adres Siedziby / Rozliczeniowy</h6>
                         <div class="row g-3">
                             <div class="col-md-8">
-                                <label asp-for="InvoiceAddress.Street" class="form-label"></label>
+                                <label asp-for="InvoiceAddress.Street" class="form-label">Ulica (faktura)</label>
                                 <input asp-for="InvoiceAddress.Street" class="form-control" placeholder="Ulica i numer" />
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="InvoiceAddress.PostalCode" class="form-label"></label>
+                                <label asp-for="InvoiceAddress.PostalCode" class="form-label">Kod pocztowy (faktura)</label>
                                 <input asp-for="InvoiceAddress.PostalCode" class="form-control" placeholder="00-000" />
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="InvoiceAddress.City" class="form-label"></label>
+                                <label asp-for="InvoiceAddress.City" class="form-label">Miasto (faktura)</label>
                                 <input asp-for="InvoiceAddress.City" class="form-control" />
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="InvoiceAddress.Country" class="form-label"></label>
+                                <label asp-for="InvoiceAddress.Country" class="form-label">Kraj (faktura)</label>
                                 <input asp-for="InvoiceAddress.Country" class="form-control" value="Polska" />
                             </div>
                         </div>

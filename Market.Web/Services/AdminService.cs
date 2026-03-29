@@ -134,42 +134,67 @@ public class AdminService : IAdminService
         int totalItems = await query.CountAsync();
         int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-        var auctions = await query
+        var data = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(a => new AdminAuctionDto
+            .Select(a => new
+            {
+                a.Id,
+                a.Title,
+                a.Price,
+                a.Category,
+                Status = a.AuctionStatus,
+                a.CreatedAt,
+                a.BannedNote,
+                a.EndDate,
+                a.Quantity,
+                a.IsCompanySale,
+                a.GeneratedByAi,
+                ImagePaths = a.Images.Select(img => img.ImagePath).ToList(),
+                UserEmail = a.User != null ? a.User.Email : "Nieznany",
+                UserName = a.User != null ? a.User.UserName : "Brak danych",
+                CompanyName = a.User != null && a.User.UserProfile != null && a.User.UserProfile.CompanyProfile != null ? a.User.UserProfile.CompanyProfile.CompanyName : null,
+                FirstName = a.User != null && a.User.UserProfile != null ? a.User.UserProfile.FirstName : null,
+                LastName = a.User != null && a.User.UserProfile != null ? a.User.UserProfile.LastName : null,
+                a.Description
+            })
+            .ToListAsync();
+
+        var auctions = data.Select(a => 
+        {
+            string sellerDisplayName = "Brak danych";
+            if (!string.IsNullOrEmpty(a.CompanyName))
+            {
+                sellerDisplayName = a.CompanyName;
+            }
+            else if (!string.IsNullOrEmpty(a.FirstName) && !string.IsNullOrEmpty(a.LastName))
+            {
+                sellerDisplayName = $"{a.FirstName} {a.LastName}";
+            }
+            else if (!string.IsNullOrEmpty(a.UserName))
+            {
+                sellerDisplayName = a.UserName;
+            }
+
+            return new AdminAuctionDto
             {
                 Id = a.Id,
                 Title = a.Title,
                 Price = a.Price,
                 Category = a.Category,
-                Status = a.AuctionStatus,
+                Status = a.Status,
                 CreatedAt = a.CreatedAt,
                 BannedNote = a.BannedNote,
-                
-                // Mapowanie nowych pól:
                 EndDate = a.EndDate,
                 Quantity = a.Quantity,
                 IsCompanySale = a.IsCompanySale,
                 GeneratedByAi = a.GeneratedByAi,
-                
-                // Pobieranie obrazka
-                ImagePaths = a.Images.Select(img => img.ImagePath).ToList(),
-
-                // Dane sprzedawcy (Email + Nazwa wyświetlana)
-                SellerEmail = a.User != null ? a.User.Email : "Nieznany",
-                SellerDisplayName = a.User != null 
-                    ? (a.User.UserProfile != null && a.User.UserProfile.CompanyProfile != null 
-                        ? a.User.UserProfile.CompanyProfile.CompanyName // Jeśli firma, pokaż nazwę firmy
-                        : (a.User.UserProfile != null ? $"{a.User.UserProfile.FirstName} {a.User.UserProfile.LastName}" : a.User.UserName)) 
-                    : "Brak danych",
-
-                // Skracanie opisu do max 100 znaków
-                ShortDescription = a.Description.Length > 100 
-                    ? a.Description.Substring(0, 100) + "..." 
-                    : a.Description
-            })
-            .ToListAsync();
+                ImagePaths = a.ImagePaths,
+                SellerEmail = a.UserEmail ?? "Nieznany",
+                SellerDisplayName = sellerDisplayName,
+                ShortDescription = a.Description.Length > 100 ? a.Description.Substring(0, 100) + "..." : a.Description
+            };
+        }).ToList();
 
         return new AdminAuctionsListViewModel
         {
