@@ -19,8 +19,7 @@
                     <section>
                         <form id="account" method="post">
                             
-                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="display:none;" 
-                                 onload="if(this.innerHTML.trim().length > 0) this.style.display='block';"></div>
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="display:none;"></div>
                             @if (!ViewData.ModelState.IsValid)
                             {
                                 <div class="alert alert-danger shadow-sm border-0 mb-4">

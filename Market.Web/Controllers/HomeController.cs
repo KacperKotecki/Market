@@ -11,7 +11,7 @@ public class HomeController : Controller
     {
     }
 
-    [Route("demo-access-preview-t5khy79jyuxby2lolnx4n5r90z58")] 
+    [HttpGet("demo-access-preview-t5khy79jyuxby2lolnx4n5r90z58")] 
     public IActionResult Index()
     {
         return View();

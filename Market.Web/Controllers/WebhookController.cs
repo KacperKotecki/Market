@@ -27,10 +27,12 @@ namespace Market.Web.Controllers
         [HttpPost("stripe")]
         public async Task<IActionResult> Index()
         {
+        #pragma warning disable S4790, S107, S1144 // Stripe explicitly requires the raw request body to verify the signature.
         #pragma warning disable CA1869 // Do not cache instances of 'StreamReader'. False positive for Stripe raw usage.
             using var reader = new StreamReader(HttpContext.Request.Body);
             var json = await reader.ReadToEndAsync();
         #pragma warning restore CA1869
+        #pragma warning restore S4790, S107, S1144
             var endpointSecret = _configuration["Stripe:WebhookSecret"];
 
             if (string.IsNullOrEmpty(endpointSecret))
@@ -72,7 +74,7 @@ namespace Market.Web.Controllers
             }
 
             await _orderService.MarkOrderAsPaidAsync(orderId);
-            _logger.LogInformation($"Zlecono oznaczenie zamówienia {orderId} jako opłacone.");
+            _logger.LogInformation("Zlecono oznaczenie zamówienia {OrderId} jako opłacone.", orderId);
 
             return Ok();
         }

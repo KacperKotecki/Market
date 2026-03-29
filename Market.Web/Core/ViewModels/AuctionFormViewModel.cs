@@ -4,7 +4,8 @@ namespace Market.Web.Core.ViewModels;
 
 public class AuctionFormViewModel
 {
-    public int Id { get; set; }  // 0 for Create, actual Id for Edit
+    [Required]
+    public int? Id { get; set; }  // 0 for Create, actual Id for Edit
 
     [Required(ErrorMessage = "Tytuł jest wymagany.")]
     [StringLength(100, MinimumLength = 3)]
@@ -25,10 +26,12 @@ public class AuctionFormViewModel
     [Required(ErrorMessage = "Kategoria jest wymagana.")]
     public string Category { get; set; } = string.Empty;
 
-    public DateTime EndDate { get; set; }
+    [Required]
+    public DateTime? EndDate { get; set; }
 
+    [Required]
     [Display(Name = "Sprzedaż jako firma (Faktura VAT / Paragon)")]
-    public bool IsCompanySale { get; set; }
+    public bool? IsCompanySale { get; set; }
 
     public bool GeneratedByAi { get; set; }
 
