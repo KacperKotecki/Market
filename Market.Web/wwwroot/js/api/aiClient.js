@@ -11,7 +11,7 @@ export async function generateDescription(formData) {
 
     const data = await response.json();
 
-    if (data.title && data.title.startsWith("ERROR:")) {
+    if (data.title?.startsWith("ERROR:")) {
         throw new Error(data.title.replace("ERROR:", "").trim());
     }
 

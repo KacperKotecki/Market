@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Jeśli AI właśnie skończyło i wypełniło dane (backend ustawi z powrotem ImagesReady po sukcesie)
                 if (generatedByAi && title) {
-                    if(!document.getElementById("Title").value || document.getElementById("Title").value === "") {
+                    if(!document.getElementById("Title").value) {
                          if (title) document.getElementById("Title").value = title;
                          if (description) document.getElementById("Description").value = description;
                          if (price) document.getElementById("Price").value = price;

@@ -9,7 +9,7 @@ function changeImage(src) {
                 freeMode: true,
                 watchSlidesProgress: true,
             });
-            var swiperMain = new Swiper(".mySwiper2", {
+            new Swiper(".mySwiper2", {
                 spaceBetween: 10,
                 navigation: {
                     nextEl: ".swiper-button-next",
