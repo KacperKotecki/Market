@@ -1,5 +1,6 @@
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
+using Market.Web.Core.DTOs;
 using Market.Web.Core.Helpers;
 using Market.Web.Core.Exceptions;
 using SixLabors.ImageSharp;
@@ -43,6 +44,43 @@ public class AuctionProcessingService : IAuctionProcessingService
         await _unitOfWork.Auctions.UpdateStatusAsync(auctionId, AuctionStatus.AiProcessing);
 
         _jobClient.Enqueue<IAiWorker>(x => x.GenerateDescriptionJobAsync(auctionId));
+    }
+
+    public async Task<int> CreateImageProcessingDraftAsync(string userId, List<string> tempPaths)
+    {
+        var auction = new Auction
+        {
+            AuctionStatus = AuctionStatus.ImagesProcessing,
+            UserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddDays(7), // Just putting a default
+            Title = string.Empty,
+            Description = string.Empty,
+            Category = string.Empty
+        };
+
+        await _unitOfWork.Auctions.AddAsync(auction);
+        await _unitOfWork.CompleteAsync(); 
+
+        _jobClient.Enqueue<IAuctionImageWorker>(x => x.ProcessImagesJobAsync(auction.Id, tempPaths.ToArray()));
+
+        return auction.Id;
+    }
+
+    public async Task<AuctionStatusDto?> GetAuctionStatusAsync(int id)
+    {
+        var auction = await _unitOfWork.Auctions.GetByIdAsync(id);
+        if (auction == null) return null;
+
+        return new AuctionStatusDto
+        {
+            Status = auction.AuctionStatus.ToString(),
+            Title = auction.Title,
+            Description = auction.Description,
+            Price = auction.Price,
+            Category = auction.Category,
+            GeneratedByAi = auction.GeneratedByAi
+        };
     }
 
     public Task CleanupTemporaryFilesJobAsync()

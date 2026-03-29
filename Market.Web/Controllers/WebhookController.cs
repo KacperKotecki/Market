@@ -27,7 +27,10 @@ namespace Market.Web.Controllers
         [HttpPost("stripe")]
         public async Task<IActionResult> Index()
         {
-            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        #pragma warning disable CA1869 // Do not cache instances of 'StreamReader'. False positive for Stripe raw usage.
+            using var reader = new StreamReader(HttpContext.Request.Body);
+            var json = await reader.ReadToEndAsync();
+        #pragma warning restore CA1869
             var endpointSecret = _configuration["Stripe:WebhookSecret"];
 
             if (string.IsNullOrEmpty(endpointSecret))

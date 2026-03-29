@@ -1,11 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Market.Web.Authorization;
-using Market.Web.Core.Models;
-using Hangfire;
 using Market.Web.Services;
 using System.Security.Claims;
-using Market.Web.Repositories;
 
 namespace Market.Web.Controllers;
 
@@ -14,13 +11,11 @@ namespace Market.Web.Controllers;
 [Authorize]
 public class AuctionsApiController : ControllerBase
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IBackgroundJobClient _jobClient;
+    private readonly IAuctionProcessingService _auctionProcessingService;
 
-    public AuctionsApiController(IUnitOfWork unitOfWork, IBackgroundJobClient jobClient)
+    public AuctionsApiController(IAuctionProcessingService auctionProcessingService)
     {
-        _unitOfWork = unitOfWork;
-        _jobClient = jobClient;
+        _auctionProcessingService = auctionProcessingService;
     }
 
     [HttpPost("draft-images")]
@@ -44,7 +39,7 @@ public class AuctionsApiController : ControllerBase
         var tempPaths = new List<string>();
         foreach (var file in files)
         {
-            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var tempPath = Path.Combine(tempFolder, fileName);
             using (var stream = new FileStream(tempPath, FileMode.Create))
             {
@@ -53,39 +48,25 @@ public class AuctionsApiController : ControllerBase
             tempPaths.Add(tempPath);
         }
 
-        var auction = new Auction
-        {
-            AuctionStatus = AuctionStatus.ImagesProcessing,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddDays(7), // Just putting a default
-            Title = string.Empty,
-            Description = string.Empty,
-            Category = string.Empty
-        };
+        var auctionId = await _auctionProcessingService.CreateImageProcessingDraftAsync(userId, tempPaths);
 
-        await _unitOfWork.Auctions.AddAsync(auction);
-        await _unitOfWork.CompleteAsync(); 
-
-        _jobClient.Enqueue<IAuctionImageWorker>(x => x.ProcessImagesJobAsync(auction.Id, tempPaths.ToArray()));
-
-        return Accepted(new { auctionId = auction.Id });
+        return Accepted(new { auctionId = auctionId });
     }
 
     [HttpGet("{id}/status")]
     public async Task<IActionResult> GetStatus(int id)
     {
-        var auction = await _unitOfWork.Auctions.GetByIdAsync(id);
-        if (auction == null) return NotFound();
+        var statusDto = await _auctionProcessingService.GetAuctionStatusAsync(id);
+        if (statusDto == null) return NotFound();
 
         return Ok(new
         {
-            status = auction.AuctionStatus.ToString(),
-            title = auction.Title,
-            description = auction.Description,
-            price = auction.Price,
-            category = auction.Category,
-            generatedByAi = auction.GeneratedByAi
+            status = statusDto.Status,
+            title = statusDto.Title,
+            description = statusDto.Description,
+            price = statusDto.Price,
+            category = statusDto.Category,
+            generatedByAi = statusDto.GeneratedByAi
         });
     }
 }
