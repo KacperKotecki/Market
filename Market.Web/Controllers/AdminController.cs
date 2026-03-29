@@ -20,6 +20,8 @@ public class AdminController : Controller
 
     public async Task<IActionResult> Index(string searchString, string sortOrder, int pageNumber = 1)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         int pageSize = 10; 
         
         var model = await _adminService.GetUsersAsync(searchString, sortOrder, pageNumber, pageSize);
@@ -64,6 +66,8 @@ public class AdminController : Controller
 
     public async Task<IActionResult> Auctions(string searchString, string sortOrder, int pageNumber = 1)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         int pageSize = 10;
         var model = await _adminService.GetAuctionsAsync(searchString, sortOrder, pageNumber, pageSize);
         return View(model);

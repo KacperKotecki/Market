@@ -42,6 +42,8 @@ public class AuctionsController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Index(AuctionFilter filter)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         filter.PageSize = 20;
         filter.Status = AuctionStatus.Active;
         var model = await _auctionService.GetAllWithFiltersAsync(filter);
@@ -52,6 +54,8 @@ public class AuctionsController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Search(AuctionFilter filter)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         filter.PageSize = 20;
         filter.Status = AuctionStatus.Active;
         var model = await _auctionService.GetAllWithFiltersAsync(filter);
@@ -62,6 +66,8 @@ public class AuctionsController : Controller
     [Buyer]
     public async Task<IActionResult> Details(int? id)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         if (id == null) return NotFound();
         var auctionViewModel = await _auctionProcessingService.GetAuctionDetailsViewModelAsync(id.Value);
         return auctionViewModel == null ? NotFound() : View(auctionViewModel);
@@ -116,6 +122,8 @@ public class AuctionsController : Controller
     [Seller]
     public async Task<IActionResult> Edit(int? id)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         if (id == null) return NotFound();
 
         var vm = await _auctionProcessingService.GetAuctionFormViewModelAsync(id.Value);

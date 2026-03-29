@@ -29,6 +29,8 @@ public class OrderController : Controller
     [HttpGet]
     public async Task<IActionResult> Checkout(int auctionId)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
@@ -159,6 +161,8 @@ public class OrderController : Controller
     [HttpGet]
     public async Task<IActionResult> Rate(int id)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
@@ -205,6 +209,8 @@ public class OrderController : Controller
     [HttpGet]
     public async Task<IActionResult> PaymentSuccess(int orderId, string session_id)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
         
@@ -224,12 +230,16 @@ public class OrderController : Controller
     [HttpGet]
     public IActionResult PaymentCancel(int orderId)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         TempData["Error"] = "Płatność została anulowana.";
         return RedirectToAction(nameof(MyOrders));
     }
 
     public async Task<IActionResult> OrderConfirmation(int id)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
