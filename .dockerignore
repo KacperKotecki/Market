@@ -5,6 +5,13 @@
 
 # dotenv files
 .env
+.git
+.idea
+.vs
+bin/
+obj/
+appsettings.Development.json
+market_uploads/
 
 # User-specific files
 *.rsuser

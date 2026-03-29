@@ -26,6 +26,8 @@ EXPOSE 8080
 COPY --from=build /app/publish .
 
 # Tworzymy folder na uploady (ważne dla trwałości zdjęć)
-RUN mkdir -p /app/wwwroot/uploads
+USER root
+RUN mkdir -p /app/wwwroot/uploads && chown -R app:app /app/wwwroot/uploads
 
+USER app
 ENTRYPOINT ["dotnet", "Market.Web.dll"]
