@@ -85,31 +85,31 @@ public class AuctionsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(AuctionFormViewModel vm)
     {
+        if (!ModelState.IsValid) return View(vm);
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        if (ModelState.IsValid)
+        if (vm.Id <= 0)
         {
-            if (vm.Id <= 0)
-            {
-                ModelState.AddModelError("", "Wystąpił błąd podczas dodawania zdjęć (brak ID aukcji). Upewnij się, że zdjęcia zostały załadowane prawidłowo.");
-                return View(vm);
-            }
-
-            try
-            {
-                await _auctionService.FinalizeCreateAuctionAsync(vm, user.Id);
-                return RedirectToAction(nameof(Details), new { id = vm.Id });
-            }
-            catch (AuctionException ex)
-            {
-                ModelState.AddModelError(ex.PropertyName ?? "EndDate", ex.Message);
-            }
-            catch (OrderAuthorizationException)
-            {
-                return Forbid();
-            }
+            ModelState.AddModelError("", "Wystąpił błąd podczas dodawania zdjęć (brak ID aukcji). Upewnij się, że zdjęcia zostały załadowane prawidłowo.");
+            return View(vm);
         }
+
+        try
+        {
+            await _auctionService.FinalizeCreateAuctionAsync(vm, user.Id);
+            return RedirectToAction(nameof(Details), new { id = vm.Id });
+        }
+        catch (AuctionException ex)
+        {
+            ModelState.AddModelError(ex.PropertyName ?? "EndDate", ex.Message);
+        }
+        catch (OrderAuthorizationException)
+        {
+            return Forbid();
+        }
+
         return View(vm);
     }
  
@@ -133,25 +133,25 @@ public class AuctionsController : Controller
     [Seller]
     public async Task<IActionResult> Edit(int id, AuctionFormViewModel vm)
     {
+        if (!ModelState.IsValid) return View(vm);
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
-        if (ModelState.IsValid)
+        try
         {
-            try
-            {
-                await _auctionService.UpdateAuctionAsync(vm, user.Id);
-                return RedirectToAction(nameof(MyAuctions));
-            }
-            catch (AuctionException ex)
-            {
-                ModelState.AddModelError(ex.PropertyName ?? "EndDate", ex.Message);
-            }
-            catch (OrderAuthorizationException)
-            {
-                return Forbid();
-            }
+            await _auctionService.UpdateAuctionAsync(vm, user.Id);
+            return RedirectToAction(nameof(MyAuctions));
         }
+        catch (AuctionException ex)
+        {
+            ModelState.AddModelError(ex.PropertyName ?? "EndDate", ex.Message);
+        }
+        catch (OrderAuthorizationException)
+        {
+            return Forbid();
+        }
+
         return View(vm);
     }
     [Seller]
@@ -159,6 +159,8 @@ public class AuctionsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SoftDelete(int id)
     {
+        if (!ModelState.IsValid) return BadRequest();
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
@@ -189,6 +191,8 @@ public class AuctionsController : Controller
     [Seller]
     public async Task<IActionResult> GenerateDescription(List<IFormFile> photos)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         if (photos == null || photos.Count == 0) return BadRequest(new { error = "Brak zdjęć." });
         try
         {

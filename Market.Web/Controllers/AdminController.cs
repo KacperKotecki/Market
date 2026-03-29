@@ -31,6 +31,8 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleBlockUser(string id, string reason) 
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         var user = await _userManager.FindByIdAsync(id);
         if (user == null) return NotFound();
 
@@ -71,6 +73,8 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleAuctionBan(int id, string? reason)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         await _adminService.ToggleAuctionBanAsync(id, reason);
         return RedirectToAction(nameof(Auctions));
     }

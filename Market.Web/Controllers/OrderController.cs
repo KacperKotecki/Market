@@ -68,6 +68,8 @@ public class OrderController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PlaceOrder(CheckoutViewModel model)
     {
+        if (!ModelState.IsValid) return View("Checkout", model);
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
@@ -105,6 +107,8 @@ public class OrderController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateOrderStatus(int orderId, OrderStatus newStatus)
     {
+        if (!ModelState.IsValid) return BadRequest();
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
@@ -128,6 +132,8 @@ public class OrderController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmDelivery(int orderId)
     {
+        if (!ModelState.IsValid) return BadRequest();
+
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
